@@ -3,6 +3,8 @@ from .thehive_wrapper import TheHiveWrapper
 
 
 class SOARWrapperBuilder:
+    SOAR_CHOICES = ["TH"]
+
     build_functions = [
         lambda protocol, hostname, base_dir, api_key: TheHiveWrapper(
             protocol,
@@ -42,15 +44,27 @@ class SOARWrapperBuilder:
         return self
 
     def build(self):
-        SOAR_CHOICES = [("TH", "The Hive")]
-        for i in range(len(SOAR_CHOICES)):
-            choice = SOAR_CHOICES[i]
-            if self.soar_type == choice[0]:
+        for i in range(len(self.SOAR_CHOICES)):
+            if self.soar_type == self.SOAR_CHOICES[i]:
+                error_msgs = []
+                if self.protocol == None or self.protocol == "":
+                    error_msgs.append("Missing protocol information")
+                if self.hostname == None or self.protocol == "":
+                    error_msgs.append("Missing hostname information")
+                if self.base_dir == None or self.protocol == "":
+                    error_msgs.append("Missing base_dir information")
+                if self.api_key == None or self.protocol == "":
+                    error_msgs.append("Missing api_key information")
+
+                if len(error_msgs) != 0:
+                    raise TypeError(", ".join(error_msgs))
+
                 try:
                     return self.build_functions[i](
-                        self.protocol, self.hostname, self.base_dir, self.api_key
+                        protocol=self.protocol,
+                        hostname=self.hostname,
+                        base_dir=self.base_dir,
+                        api_key=self.api_key,
                     )
-                except TypeError:
-                    break
-
-        return None
+                except TypeError as e:
+                    raise TypeError("Incorrect SOAR information")

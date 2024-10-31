@@ -76,6 +76,8 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'ACI_Backend.wsgi.application'
 
+# Ollama url
+OLLAMA_URL = os.getenv("OLLAMA_URL")
 
 # Database
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
