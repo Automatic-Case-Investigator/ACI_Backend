@@ -170,7 +170,6 @@ def generate_tasks(request):
         
         case_data = soar_wrapper.get_case(case_id)
         
-        # Todo: run LLM for task generation
         try:
             task_generator = TaskGenerator()
             task_generator.set_soarwrapper(soarwrapper=soar_wrapper)
