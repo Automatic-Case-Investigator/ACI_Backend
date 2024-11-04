@@ -25,6 +25,7 @@ def add_soar_info(request):
         soar_type = request.POST.get("soar_type")
         api_key = request.POST.get("api_key")
         protocol = request.POST.get("protocol")
+        name = request.POST.get("name")
         hostname = request.POST.get("hostname")
         base_dir = request.POST.get("base_dir")
 
@@ -44,6 +45,7 @@ def add_soar_info(request):
                 soar_type=soar_type,
                 api_key=api_key,
                 protocol=protocol,
+                name=name,
                 hostname=hostname,
                 base_dir=base_dir,
             ).save()
@@ -53,6 +55,39 @@ def add_soar_info(request):
     else:
         return JsonResponse({"error": "Invalid method"})
 
+
+def get_soars_info(request):
+    if request.method == "GET":
+        soar_objs = models.SOARInfo.objects.all()
+        output = {"message": []}
+        
+        for soar in soar_objs:
+            output["message"].append({
+                "id": soar.id,
+                "soar_type" : soar.soar_type,
+                "api_key": soar.api_key,
+                "protocol": soar.protocol,
+                "hostname": soar.hostname,
+                "base_dir": soar.base_dir,
+                "name": soar.name
+            })
+        
+        return JsonResponse(output)
+    else:
+        return JsonResponse({"error": "Invalid method"})
+
+def delete_soar_info(request):
+    if request.method == "POST":
+        soar_id = request.POST.get("soar_id")
+
+        if soar_id is None:
+            return JsonResponse({"error": "Required field missing"})
+        
+        models.SOARInfo.objects.filter(id=soar_id).delete()
+        
+        return JsonResponse({"message": "Success"})
+    else:
+        return JsonResponse({"error": "Invalid method"})
 
 def set_soar_info(request):
     """Set information of a SOAR in the database
@@ -76,20 +111,26 @@ def set_soar_info(request):
         soar_type = request.POST.get("soar_type")
         api_key = request.POST.get("api_key")
         protocol = request.POST.get("protocol")
+        name = request.POST.get("name")
         hostname = request.POST.get("hostname")
         base_dir = request.POST.get("base_dir")
 
-        if soar_id is None or soar_type is None:
+        if soar_id is None:
             return JsonResponse({"error": "Required field missing"})
 
         try:
-            models.SOARInfo.objects.filter(id=soar_id).update(
-                soar_type=soar_type,
-                api_key=api_key,
-                protocol=protocol,
-                hostname=hostname,
-                base_dir=base_dir,
-            )
+            if soar_type is not None:
+                models.SOARInfo.objects.filter(id=soar_id).update(soar_type=soar_type)
+            if api_key is not None:
+                models.SOARInfo.objects.filter(id=soar_id).update(api_key=api_key)
+            if protocol is not None:
+                models.SOARInfo.objects.filter(id=soar_id).update(protocol=protocol)
+            if name is not None:
+                models.SOARInfo.objects.filter(id=soar_id).update(name=name)
+            if hostname is not None:
+                models.SOARInfo.objects.filter(id=soar_id).update(hostname=hostname)
+            if base_dir is not None:
+                models.SOARInfo.objects.filter(id=soar_id).update(base_dir=base_dir)
             return JsonResponse({"message": "Success"})
         except ValueError:
             return JsonResponse({"error": "Invalid SOAR type"})
@@ -130,10 +171,11 @@ def get_case(request):
             soar_wrapper = soar_wrapper_builder.build()
         except TypeError as e:
             return JsonResponse({"error": str(e)})
-            
+
         return JsonResponse(soar_wrapper.get_case(case_id))
     else:
         return JsonResponse({"error": "Invalid method"})
+
 
 def generate_tasks(request):
     """Generate tasks for a specific case
@@ -167,17 +209,17 @@ def generate_tasks(request):
             soar_wrapper = soar_wrapper_builder.build()
         except TypeError as e:
             return JsonResponse({"error": str(e)})
-        
+
         case_data = soar_wrapper.get_case(case_id)
-        
+
         try:
             task_generator = TaskGenerator()
             task_generator.set_soarwrapper(soarwrapper=soar_wrapper)
             task_generator.generate_task(case_data=case_data)
-            
+
             return JsonResponse({"message": "Success"})
         except TypeError as e:
             return JsonResponse({"error": str(e)})
-        
+
     else:
         return JsonResponse({"error": "Invalid method"})

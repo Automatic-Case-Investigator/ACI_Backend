@@ -3,8 +3,8 @@ import requests
 
 
 class TheHiveWrapper(SOARWrapper):
-    def __init__(self, protocol, hostname, base_dir, api_key):
-        SOARWrapper.__init__(self, protocol, hostname, base_dir, api_key)
+    def __init__(self, protocol, name, hostname, base_dir, api_key):
+        SOARWrapper.__init__(self, name, protocol, hostname, base_dir, api_key)
 
     def get_case(self, case_id):
         url = f"{self.protocol}//{self.hostname}{self.base_dir}api/v1/case/{case_id}"

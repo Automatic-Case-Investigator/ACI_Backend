@@ -1,6 +1,7 @@
 class SOARWrapper:
-    def __init__(self, protocol, hostname, base_dir, api_key):
+    def __init__(self, protocol, name, hostname, base_dir, api_key):
         self.protocol = protocol
+        self.name = name
         self.hostname = hostname
         self.base_dir = base_dir
         self.api_key = api_key

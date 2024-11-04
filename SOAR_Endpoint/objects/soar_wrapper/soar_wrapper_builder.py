@@ -6,8 +6,9 @@ class SOARWrapperBuilder:
     SOAR_CHOICES = ["TH"]
 
     build_functions = [
-        lambda protocol, hostname, base_dir, api_key: TheHiveWrapper(
+        lambda protocol, name, hostname, base_dir, api_key: TheHiveWrapper(
             protocol,
+            name,
             hostname,
             base_dir,
             api_key,
@@ -31,6 +32,10 @@ class SOARWrapperBuilder:
         self.protocol = protocol
         return self
 
+    def setName(self, name):
+        self.name = name
+        return self
+    
     def setHostname(self, hostname):
         self.hostname = hostname
         return self
@@ -62,6 +67,7 @@ class SOARWrapperBuilder:
                 try:
                     return self.build_functions[i](
                         protocol=self.protocol,
+                        name=self.name,
                         hostname=self.hostname,
                         base_dir=self.base_dir,
                         api_key=self.api_key,
