@@ -1,6 +1,6 @@
 from .objects.soar_wrapper.soar_wrapper_builder import SOARWrapperBuilder
 from .objects.ai_systems.task_generator.task_generator import TaskGenerator
-from .objects.job_scheduler.job_scheduler import job_scheduler
+from ACI_Backend.objects.job_scheduler.job_scheduler import job_scheduler
 from django.shortcuts import render
 from django.http import JsonResponse
 from . import models
