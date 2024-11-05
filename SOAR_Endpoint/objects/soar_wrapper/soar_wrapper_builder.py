@@ -7,11 +7,11 @@ class SOARWrapperBuilder:
 
     build_functions = [
         lambda protocol, name, hostname, base_dir, api_key: TheHiveWrapper(
-            protocol,
-            name,
-            hostname,
-            base_dir,
-            api_key,
+            protocol=protocol,
+            name=name,
+            hostname=hostname,
+            base_dir=base_dir,
+            api_key=api_key,
         )
     ]
 
@@ -47,7 +47,16 @@ class SOARWrapperBuilder:
     def setAPIKey(self, api_key):
         self.api_key = api_key
         return self
-
+    
+    def build_from_model_object(self, soar_info_obj):
+        self.setName(soar_info_obj.name)
+        self.setSOARType(soar_info_obj.soar_type)
+        self.setProtocol(soar_info_obj.protocol)
+        self.setHostname(soar_info_obj.hostname)
+        self.setBaseDir(soar_info_obj.base_dir)
+        self.setAPIKey(soar_info_obj.api_key)
+        return self.build()
+        
     def build(self):
         for i in range(len(self.SOAR_CHOICES)):
             if self.soar_type == self.SOAR_CHOICES[i]:
@@ -73,4 +82,6 @@ class SOARWrapperBuilder:
                         api_key=self.api_key,
                     )
                 except TypeError as e:
-                    raise TypeError("Incorrect SOAR information")
+                    raise TypeError("Incorrect SOAR information. Please make sure your entered information that is supported by the system.")
+                
+        raise TypeError("Incorrect SOAR information. Please make sure your entered information that is supported by the system.")

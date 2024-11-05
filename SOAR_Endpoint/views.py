@@ -55,7 +55,6 @@ def add_soar_info(request):
     else:
         return JsonResponse({"error": "Invalid method"})
 
-
 def get_soars_info(request):
     if request.method == "GET":
         soar_objs = models.SOARInfo.objects.all()
@@ -138,6 +137,30 @@ def set_soar_info(request):
     else:
         return JsonResponse({"error": "Invalid method"})
 
+def get_organizations(request):
+    if request.method == "GET":
+        soar_id = request.GET.get("soar_id")
+        
+        # if user does not provide the argument
+        if soar_id is None:
+            return JsonResponse({"error": "Target SOAR id not found"})
+        
+        # if corresponding SOAR data entry doesn't exist
+        target_soar = models.SOARInfo.objects.get(id=soar_id)
+        if target_soar is None:
+            return JsonResponse({"error": "Target SOAR id not found"})
+        
+        soar_wrapper_builder = SOARWrapperBuilder()
+        soar_wrapper = None
+        try:
+            soar_wrapper = soar_wrapper_builder.build_from_model_object(soar_info_obj=target_soar)
+        except TypeError as e:
+            return JsonResponse({"error": str(e)})
+        
+        return JsonResponse(soar_wrapper.get_organizations())
+
+    else:
+        return JsonResponse({"error": "Invalid method"})
 
 def get_case(request):
     """Get case data by case id
@@ -161,14 +184,9 @@ def get_case(request):
 
         soar_info_obj = models.SOARInfo.objects.get(id=soar_id)
         soar_wrapper_builder = SOARWrapperBuilder()
-        soar_wrapper_builder.setSOARType(soar_info_obj.soar_type)
-        soar_wrapper_builder.setProtocol(soar_info_obj.protocol)
-        soar_wrapper_builder.setHostname(soar_info_obj.hostname)
-        soar_wrapper_builder.setBaseDir(soar_info_obj.base_dir)
-        soar_wrapper_builder.setAPIKey(soar_info_obj.api_key)
         soar_wrapper = None
         try:
-            soar_wrapper = soar_wrapper_builder.build()
+            soar_wrapper = soar_wrapper_builder.build_from_model_object(soar_info_obj=soar_info_obj)
         except TypeError as e:
             return JsonResponse({"error": str(e)})
 
