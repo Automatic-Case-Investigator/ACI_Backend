@@ -11,7 +11,6 @@ class TaskGenerator:
     soarwrapper = None
     def set_soarwrapper(self, soarwrapper):
         self.soarwrapper = soarwrapper
-        pass
     
     def extract_case_description(self, case_data):
         if str(type(self.soarwrapper)) == str(thehive_wrapper.TheHiveWrapper):

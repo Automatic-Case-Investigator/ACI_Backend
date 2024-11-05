@@ -1,8 +1,10 @@
 from .objects.soar_wrapper.soar_wrapper_builder import SOARWrapperBuilder
 from .objects.ai_systems.task_generator.task_generator import TaskGenerator
+from .objects.job_scheduler.job_scheduler import job_scheduler
 from django.shortcuts import render
 from django.http import JsonResponse
 from . import models
+import requests
 
 
 def add_soar_info(request):
@@ -217,27 +219,27 @@ def generate_tasks(request):
 
         soar_info_obj = models.SOARInfo.objects.get(id=soar_id)
         soar_wrapper_builder = SOARWrapperBuilder()
-        soar_wrapper_builder.setSOARType(soar_info_obj.soar_type)
-        soar_wrapper_builder.setProtocol(soar_info_obj.protocol)
-        soar_wrapper_builder.setHostname(soar_info_obj.hostname)
-        soar_wrapper_builder.setBaseDir(soar_info_obj.base_dir)
-        soar_wrapper_builder.setAPIKey(soar_info_obj.api_key)
-        soar_wrapper = None
         try:
-            soar_wrapper = soar_wrapper_builder.build()
+            soar_wrapper = soar_wrapper_builder.build_from_model_object(soar_info_obj=soar_info_obj)
         except TypeError as e:
             return JsonResponse({"error": str(e)})
 
-        case_data = soar_wrapper.get_case(case_id)
+        case_data = None
 
+        try:
+            case_data = soar_wrapper.get_case(case_id)
+        except requests.exceptions.ConnectionError:
+            return JsonResponse({"error": "Unable to connect to the SOAR platform. Please make sure you have the correct connection settings."})
+        
         try:
             task_generator = TaskGenerator()
             task_generator.set_soarwrapper(soarwrapper=soar_wrapper)
-            task_generator.generate_task(case_data=case_data)
-
-            return JsonResponse({"message": "Success"})
+            job_scheduler.add_job(task_generator.generate_task, case_data=case_data)
         except TypeError as e:
             return JsonResponse({"error": str(e)})
-
+        except requests.exceptions.ConnectionError:
+            return JsonResponse({"error": "Unable to connect to the AI backend. Please contact the administrator for this problem."})
+        
+        return JsonResponse({"message": "Success"})
     else:
         return JsonResponse({"error": "Invalid method"})
