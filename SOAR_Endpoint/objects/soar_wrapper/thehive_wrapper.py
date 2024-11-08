@@ -25,7 +25,24 @@ class TheHiveWrapper(SOARWrapper):
                 json={"query": [{"_name": "listOrganisation"}]},
             )
             
-            return response.json()
+            organizations = response.json()
+            output = []
+            for org in organizations:
+                formatted = {
+                    "id": "",
+                    "createdBy": "",
+                    "createdAt": -1,
+                    "name": "",
+                    "description": ""
+                }
+                formatted["id"] = org["_id"]
+                formatted["createdBy"] = org["_createdBy"]
+                formatted["createdAt"] = org["_createdAt"]
+                formatted["name"] = org["name"]
+                formatted["description"] = org["description"]
+                output.append(formatted)
+            
+            return output
         except requests.exceptions.ConnectionError:
             return {"error": "Unable to connect to the SOAR platform. Please make sure you have the correct connection settings."}
 

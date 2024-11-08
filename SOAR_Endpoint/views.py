@@ -159,7 +159,7 @@ def get_organizations(request):
         except TypeError as e:
             return JsonResponse({"error": str(e)})
         
-        return JsonResponse(soar_wrapper.get_organizations())
+        return JsonResponse({"organizations": soar_wrapper.get_organizations()})
 
     else:
         return JsonResponse({"error": "Invalid method"})
