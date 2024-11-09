@@ -24,7 +24,7 @@ class TheHiveWrapper(SOARWrapper):
                 },
                 json={"query": [{"_name": "listOrganisation"}]},
             )
-            
+
             organizations = response.json()
             output = []
             for org in organizations:
@@ -33,7 +33,7 @@ class TheHiveWrapper(SOARWrapper):
                     "createdBy": "",
                     "createdAt": -1,
                     "name": "",
-                    "description": ""
+                    "description": "",
                 }
                 formatted["id"] = org["_id"]
                 formatted["createdBy"] = org["_createdBy"]
@@ -41,13 +41,17 @@ class TheHiveWrapper(SOARWrapper):
                 formatted["name"] = org["name"]
                 formatted["description"] = org["description"]
                 output.append(formatted)
-            
-            return output
+
+            return {"organizations": output}
         except requests.exceptions.ConnectionError:
-            return {"error": "Unable to connect to the SOAR platform. Please make sure you have the correct connection settings."}
+            return {
+                "error": "Unable to connect to the SOAR platform. Please make sure you have the correct connection settings."
+            }
 
         except requests.exceptions.JSONDecodeError:
-            return {"error": "The SOAR URL provided does not provide a valid data format. Please make sure that the soar is running on the URL."}
+            return {
+                "error": "The SOAR URL provided does not provide a valid data format. Please make sure that the soar is running on the URL."
+            }
 
     def get_case(self, case_id):
         url = f"{self.protocol}//{self.hostname}{self.base_dir}api/v1/case/{case_id}"
@@ -60,6 +64,59 @@ class TheHiveWrapper(SOARWrapper):
         )
 
         return response.json()
+
+    def get_cases(self, org_id):
+        try:
+            url = f"{self.protocol}//{self.hostname}{self.base_dir}api/v1/query"
+            response = requests.post(
+                url,
+                headers={
+                    "Content-Type": "application/json",
+                    "Authorization": f"Bearer {self.api_key}",
+                    "X-Organisation": f"{org_id}",
+                },
+                json={"query": [{"_name": "listCase"}]},
+            )
+
+            return {"cases": response.json()}
+        except requests.exceptions.ConnectionError:
+            return {
+                "error": "Unable to connect to the SOAR platform. Please make sure you have the correct connection settings."
+            }
+
+        except requests.exceptions.JSONDecodeError:
+            return {
+                "error": "The SOAR URL provided does not provide a valid data format. Please make sure that the soar is running on the URL."
+            }
+
+    def get_tasks(self, org_id, case_id):
+        try:
+            url = f"{self.protocol}//{self.hostname}{self.base_dir}api/v1/query"
+            response = requests.post(
+                url,
+                headers={
+                    "Content-Type": "application/json",
+                    "Authorization": f"Bearer {self.api_key}",
+                    "X-Organisation": f"{org_id}",
+                },
+                json={
+                    "query": [
+                        {"_name": "getCase", "idOrName": case_id},
+                        {"_name": "tasks"},
+                    ]
+                },
+            )
+
+            return {"tasks": response.json()}
+        except requests.exceptions.ConnectionError:
+            return {
+                "error": "Unable to connect to the SOAR platform. Please make sure you have the correct connection settings."
+            }
+
+        except requests.exceptions.JSONDecodeError:
+            return {
+                "error": "The SOAR URL provided does not provide a valid data format. Please make sure that the soar is running on the URL."
+            }
 
     def create_task_in_case(self, case_id, task_data):
         url = (

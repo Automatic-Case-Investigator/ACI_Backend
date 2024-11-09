@@ -140,6 +140,17 @@ def set_soar_info(request):
         return JsonResponse({"error": "Invalid method"})
 
 def get_organizations(request):
+    """List all organizations visible to the user
+
+    GET parameters:
+        soar_id: SOAR id in the database
+
+    Args:
+        request (_type_): django request
+
+    Returns:
+        JsonResponse: Json response
+    """
     if request.method == "GET":
         soar_id = request.GET.get("soar_id")
         
@@ -159,7 +170,7 @@ def get_organizations(request):
         except TypeError as e:
             return JsonResponse({"error": str(e)})
         
-        return JsonResponse({"organizations": soar_wrapper.get_organizations()})
+        return JsonResponse(soar_wrapper.get_organizations())
 
     else:
         return JsonResponse({"error": "Invalid method"})
@@ -195,7 +206,71 @@ def get_case(request):
         return JsonResponse(soar_wrapper.get_case(case_id))
     else:
         return JsonResponse({"error": "Invalid method"})
+    
+def get_cases(request):
+    """List all cases in the organization
 
+    GET parameters:
+        soar_id: SOAR id in the database
+        org_id: organization id depending on the SOAR used
+
+    Args:
+        request (_type_): django request
+
+    Returns:
+        JsonResponse: Json response
+    """
+    if request.method == "GET":
+        soar_id = request.GET.get("soar_id")
+        org_id = request.GET.get("org_id")
+
+        if soar_id is None or org_id is None:
+            return JsonResponse({"error": "Required field missing"})
+
+        soar_info_obj = models.SOARInfo.objects.get(id=soar_id)
+        soar_wrapper_builder = SOARWrapperBuilder()
+        soar_wrapper = None
+        try:
+            soar_wrapper = soar_wrapper_builder.build_from_model_object(soar_info_obj=soar_info_obj)
+        except TypeError as e:
+            return JsonResponse({"error": str(e)})
+
+        return JsonResponse(soar_wrapper.get_cases(org_id))
+    else:
+        return JsonResponse({"error": "Invalid method"})
+
+def get_tasks(request):
+    """Get tasks for a specific case
+
+    POST parameters:
+        soar_id: SOAR id in the database
+        org_id: organization id depending on the SOAR used
+        case_id: case id depending on the SOAR used
+
+    Args:
+        request (_type_): django request
+
+    Returns:
+        JsonResponse: Json response
+    """
+    if request.method == "GET":
+        soar_id = request.GET.get("soar_id")
+        org_id = request.GET.get("org_id")
+        case_id = request.GET.get("case_id")
+
+        if soar_id is None or org_id is None or case_id is None:
+            return JsonResponse({"error": "Required field missing"})
+
+        soar_info_obj = models.SOARInfo.objects.get(id=soar_id)
+        soar_wrapper_builder = SOARWrapperBuilder()
+        try:
+            soar_wrapper = soar_wrapper_builder.build_from_model_object(soar_info_obj=soar_info_obj)
+        except TypeError as e:
+            return JsonResponse({"error": str(e)})
+
+        return JsonResponse(soar_wrapper.get_tasks(org_id, case_id))
+    else:
+        return JsonResponse({"error": "Invalid method"})
 
 def generate_tasks(request):
     """Generate tasks for a specific case
