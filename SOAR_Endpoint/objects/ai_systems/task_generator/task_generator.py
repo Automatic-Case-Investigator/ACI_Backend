@@ -43,7 +43,6 @@ class TaskGenerator:
         tasks = answer_raw.split("\n\n")
         
         for task in tasks:
-            print(task)
             task_formatted = {
                 "Tag": "",
                 "Title": "",

@@ -132,5 +132,6 @@ class TheHiveWrapper(SOARWrapper):
                 "title": task_data["Title"],
                 "description": task_data["Description"],
                 "status": "Waiting",
+                "group": "Automatic Case Investigator"
             },
         )
