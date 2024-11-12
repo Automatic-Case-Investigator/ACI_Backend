@@ -92,20 +92,45 @@ class TheHiveWrapper(SOARWrapper):
             return {
                 "error": "The SOAR URL provided does not provide a valid data format. Please make sure that the soar is running on the URL."
             }
-    
-    def get_task(self, org_id, case_id, task_id):
+
+    def get_task(self, org_id, task_id):
         try:
-            url = f"{self.protocol}//{self.hostname}{self.base_dir}api/v1/task/{task_id}"
+            url = (
+                f"{self.protocol}//{self.hostname}{self.base_dir}api/v1/task/{task_id}"
+            )
             response = requests.get(
                 url,
                 headers={
                     "Content-Type": "application/json",
                     "Authorization": f"Bearer {self.api_key}",
                     "X-Organisation": f"{org_id}",
-                }
+                },
             )
-        
+
             return self.format_response(response.json())
+        except requests.exceptions.ConnectionError:
+            return {
+                "error": "Unable to connect to the SOAR platform. Please make sure you have the correct connection settings."
+            }
+
+        except requests.exceptions.JSONDecodeError:
+            return {
+                "error": "The SOAR URL provided does not provide a valid data format. Please make sure that the soar is running on the URL."
+            }
+
+    def delete_task(self, task_id):
+        try:
+            url = (
+                f"{self.protocol}//{self.hostname}{self.base_dir}api/v1/task/{task_id}"
+            )
+            requests.delete(
+                url,
+                headers={
+                    "Content-Type": "application/json",
+                    "Authorization": f"Bearer {self.api_key}",
+                },
+            )
+            return {"message": "Success"}
         except requests.exceptions.ConnectionError:
             return {
                 "error": "Unable to connect to the SOAR platform. Please make sure you have the correct connection settings."
@@ -138,7 +163,7 @@ class TheHiveWrapper(SOARWrapper):
             for task in response.json():
                 formatted = self.format_response(task)
                 output.append(formatted)
-        
+
             return {"tasks": output}
         except requests.exceptions.ConnectionError:
             return {
@@ -157,7 +182,7 @@ class TheHiveWrapper(SOARWrapper):
                 url,
                 headers={
                     "Content-Type": "application/json",
-                    "Authorization": f"Bearer {self.api_key}"
+                    "Authorization": f"Bearer {self.api_key}",
                 },
                 json={
                     "query": [
@@ -170,7 +195,7 @@ class TheHiveWrapper(SOARWrapper):
             for task in response.json():
                 formatted = self.format_response(task)
                 output.append(formatted)
-        
+
             return {"task_logs": output}
         except requests.exceptions.ConnectionError:
             return {
@@ -181,7 +206,7 @@ class TheHiveWrapper(SOARWrapper):
             return {
                 "error": "The SOAR URL provided does not provide a valid data format. Please make sure that the soar is running on the URL."
             }
-    
+
     def create_task_in_case(self, case_id, task_data):
         url = (
             f"{self.protocol}//{self.hostname}{self.base_dir}api/v1/case/{case_id}/task"
@@ -196,6 +221,6 @@ class TheHiveWrapper(SOARWrapper):
                 "title": task_data["Title"],
                 "description": task_data["Description"],
                 "status": "Waiting",
-                "group": "Automatic Case Investigator"
+                "group": "Automatic Case Investigator",
             },
         )

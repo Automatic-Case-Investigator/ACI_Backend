@@ -257,10 +257,9 @@ def get_task(request):
     if request.method == "GET":
         soar_id = request.GET.get("soar_id")
         org_id = request.GET.get("org_id")
-        case_id = request.GET.get("case_id")
         task_id = request.GET.get("task_id")
 
-        if soar_id is None or org_id is None or case_id is None or task_id is None:
+        if soar_id is None or org_id is None or task_id is None:
             return JsonResponse({"error": "Required field missing"})
 
         soar_info_obj = models.SOARInfo.objects.get(id=soar_id)
@@ -270,10 +269,41 @@ def get_task(request):
         except TypeError as e:
             return JsonResponse({"error": str(e)})
 
-        return JsonResponse(soar_wrapper.get_task(org_id, case_id, task_id))
+        return JsonResponse(soar_wrapper.get_task(org_id, task_id))
     else:
         return JsonResponse({"error": "Invalid method"})
     
+def delete_task(request):
+    """Get tasks for a specific case
+
+    POST parameters:
+        soar_id: SOAR id in the database
+        task_id: task id depending on the SOAR used
+
+    Args:
+        request (_type_): django request
+
+    Returns:
+        JsonResponse: Json response
+    """
+    if request.method == "POST":
+        soar_id = request.POST.get("soar_id")
+        task_id = request.POST.get("task_id")
+
+        if soar_id is None or task_id is None:
+            return JsonResponse({"error": "Required field missing"})
+
+        soar_info_obj = models.SOARInfo.objects.get(id=soar_id)
+        soar_wrapper_builder = SOARWrapperBuilder()
+        try:
+            soar_wrapper = soar_wrapper_builder.build_from_model_object(soar_info_obj=soar_info_obj)
+        except TypeError as e:
+            return JsonResponse({"error": str(e)})
+
+        return JsonResponse(soar_wrapper.delete_task(task_id))
+    else:
+        return JsonResponse({"error": "Invalid method"})
+
 def get_tasks(request):
     """Get tasks for a specific case
 
