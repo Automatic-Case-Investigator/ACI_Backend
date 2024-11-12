@@ -54,4 +54,4 @@ class TaskGenerator:
             task_formatted["Tag"] = task[task_tag_search.start():task_title_search.start()]
             task_formatted["Title"] = task[task_title_search.start() + 7:task_description_search.start()]
             task_formatted["Description"] = task[task_description_search.start() + 13:]
-            self.soarwrapper.create_task_in_case(case_id=case_data["_id"], task_data=task_formatted)
+            self.soarwrapper.create_task_in_case(case_id=case_data["id"], task_data=task_formatted)

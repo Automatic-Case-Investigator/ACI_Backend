@@ -10,6 +10,8 @@ urlpatterns = [
     path("get_organizations/", views.get_organizations, name="get_organizations"),
     path("get_case/", views.get_case, name="get_case"),
     path("get_cases/", views.get_cases, name="get_cases"),
+    path("get_task/", views.get_task, name="get_task"),
     path("get_tasks/", views.get_tasks, name="get_tasks"),
+    path("get_task_logs/", views.get_task_logs, name="get_task_logs"),
     path("generate_tasks/", views.generate_tasks, name="generate_tasks")
 ]

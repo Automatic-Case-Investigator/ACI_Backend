@@ -13,6 +13,17 @@ class TheHiveWrapper(SOARWrapper):
             api_key=api_key,
         )
 
+    def format_response(self, raw_response):
+        raw_response["id"] = raw_response["_id"]
+        raw_response["createdBy"] = raw_response["_createdBy"]
+        raw_response["createdAt"] = raw_response["_createdAt"]
+        raw_response["type"] = raw_response["_type"]
+        del raw_response["_id"]
+        del raw_response["_createdBy"]
+        del raw_response["_createdAt"]
+        del raw_response["_type"]
+        return raw_response
+
     def get_organizations(self):
         url = f"{self.protocol}//{self.hostname}{self.base_dir}api/v1/query"
         try:
@@ -28,18 +39,7 @@ class TheHiveWrapper(SOARWrapper):
             organizations = response.json()
             output = []
             for org in organizations:
-                formatted = {
-                    "id": "",
-                    "createdBy": "",
-                    "createdAt": -1,
-                    "name": "",
-                    "description": "",
-                }
-                formatted["id"] = org["_id"]
-                formatted["createdBy"] = org["_createdBy"]
-                formatted["createdAt"] = org["_createdAt"]
-                formatted["name"] = org["name"]
-                formatted["description"] = org["description"]
+                formatted = self.format_response(org)
                 output.append(formatted)
 
             return {"organizations": output}
@@ -63,7 +63,7 @@ class TheHiveWrapper(SOARWrapper):
             },
         )
 
-        return response.json()
+        return self.format_response(response.json())
 
     def get_cases(self, org_id):
         try:
@@ -78,7 +78,34 @@ class TheHiveWrapper(SOARWrapper):
                 json={"query": [{"_name": "listCase"}]},
             )
 
-            return {"cases": response.json()}
+            output = []
+            for case_data in response.json():
+                formatted = self.format_response(case_data)
+                output.append(formatted)
+            return {"cases": output}
+        except requests.exceptions.ConnectionError:
+            return {
+                "error": "Unable to connect to the SOAR platform. Please make sure you have the correct connection settings."
+            }
+
+        except requests.exceptions.JSONDecodeError:
+            return {
+                "error": "The SOAR URL provided does not provide a valid data format. Please make sure that the soar is running on the URL."
+            }
+    
+    def get_task(self, org_id, case_id, task_id):
+        try:
+            url = f"{self.protocol}//{self.hostname}{self.base_dir}api/v1/task/{task_id}"
+            response = requests.get(
+                url,
+                headers={
+                    "Content-Type": "application/json",
+                    "Authorization": f"Bearer {self.api_key}",
+                    "X-Organisation": f"{org_id}",
+                }
+            )
+        
+            return self.format_response(response.json())
         except requests.exceptions.ConnectionError:
             return {
                 "error": "Unable to connect to the SOAR platform. Please make sure you have the correct connection settings."
@@ -107,7 +134,12 @@ class TheHiveWrapper(SOARWrapper):
                 },
             )
 
-            return {"tasks": response.json()}
+            output = []
+            for task in response.json():
+                formatted = self.format_response(task)
+                output.append(formatted)
+        
+            return {"tasks": output}
         except requests.exceptions.ConnectionError:
             return {
                 "error": "Unable to connect to the SOAR platform. Please make sure you have the correct connection settings."
@@ -118,6 +150,38 @@ class TheHiveWrapper(SOARWrapper):
                 "error": "The SOAR URL provided does not provide a valid data format. Please make sure that the soar is running on the URL."
             }
 
+    def get_task_logs(self, task_id):
+        try:
+            url = f"{self.protocol}//{self.hostname}{self.base_dir}api/v1/query"
+            response = requests.post(
+                url,
+                headers={
+                    "Content-Type": "application/json",
+                    "Authorization": f"Bearer {self.api_key}"
+                },
+                json={
+                    "query": [
+                        {"_name": "listLog", "idOrName": task_id},
+                    ]
+                },
+            )
+
+            output = []
+            for task in response.json():
+                formatted = self.format_response(task)
+                output.append(formatted)
+        
+            return {"task_logs": output}
+        except requests.exceptions.ConnectionError:
+            return {
+                "error": "Unable to connect to the SOAR platform. Please make sure you have the correct connection settings."
+            }
+
+        except requests.exceptions.JSONDecodeError:
+            return {
+                "error": "The SOAR URL provided does not provide a valid data format. Please make sure that the soar is running on the URL."
+            }
+    
     def create_task_in_case(self, case_id, task_data):
         url = (
             f"{self.protocol}//{self.hostname}{self.base_dir}api/v1/case/{case_id}/task"
