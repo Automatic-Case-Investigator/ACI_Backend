@@ -14,14 +14,17 @@ class TheHiveWrapper(SOARWrapper):
         )
 
     def format_response(self, raw_response):
-        raw_response["id"] = raw_response["_id"]
-        raw_response["createdBy"] = raw_response["_createdBy"]
-        raw_response["createdAt"] = raw_response["_createdAt"]
-        raw_response["type"] = raw_response["_type"]
-        del raw_response["_id"]
-        del raw_response["_createdBy"]
-        del raw_response["_createdAt"]
-        del raw_response["_type"]
+        try:
+            raw_response["id"] = raw_response["_id"]
+            raw_response["createdBy"] = raw_response["_createdBy"]
+            raw_response["createdAt"] = raw_response["_createdAt"]
+            raw_response["type"] = raw_response["_type"]
+            del raw_response["_id"]
+            del raw_response["_createdBy"]
+            del raw_response["_createdAt"]
+            del raw_response["_type"]
+        except KeyError:
+            pass
         return raw_response
 
     def get_organizations(self):
@@ -208,19 +211,23 @@ class TheHiveWrapper(SOARWrapper):
             }
 
     def create_task_in_case(self, case_id, task_data):
-        url = (
-            f"{self.protocol}//{self.hostname}{self.base_dir}api/v1/case/{case_id}/task"
-        )
-        requests.post(
-            url,
-            headers={
-                "Content-Type": "application/json",
-                "Authorization": f"Bearer {self.api_key}",
-            },
-            json={
-                "title": task_data["Title"],
-                "description": task_data["Description"],
-                "status": "Waiting",
-                "group": "Automatic Case Investigator",
-            },
-        )
+        try:
+            url = f"{self.protocol}//{self.hostname}{self.base_dir}api/v1/case/{case_id}/task"
+            requests.post(
+                url,
+                headers={
+                    "Content-Type": "application/json",
+                    "Authorization": f"Bearer {self.api_key}",
+                },
+                json={
+                    "title": task_data["Title"],
+                    "description": task_data["Description"],
+                    "status": "Waiting",
+                    "group": "Automatic Case Investigator",
+                },
+            )
+            return {"message": "Success"}
+        except requests.exceptions.ConnectionError:
+            return {
+                "error": "Unable to connect to the SOAR platform. Please make sure you have the correct connection settings."
+            }

@@ -1,59 +1,115 @@
-import concurrent.futures
-import uuid
-from redis import Redis
-from threading import Lock
 from django.conf import settings
+from threading import Lock
+import concurrent.futures
+from redis import Redis
+import uuid
+import time
 
-redis_client = Redis(host=settings.REDIS_HOST, port=settings.REDIS_PORT, db=settings.REDIS_DB, decode_responses=True)
+
+redis_client = Redis(
+    host=settings.REDIS_HOST,
+    port=settings.REDIS_PORT,
+    db=settings.REDIS_DB,
+    decode_responses=True,
+)
+
 
 class Job:
-    def __init__(self, func, *args, **kwargs):
-        self.id = str(uuid.uuid4())
+    def __init__(self, func, name: str = "", *args, **kwargs):
+        self.id = f"{name}_{str(uuid.uuid4())}"
+        self.created_at = time.time()
         self.func = func
         self.args = args
         self.kwargs = kwargs
         self.status = "queued"
         self.future = None
 
+
 class JobScheduler:
-    def __init__(self, max_workers=5):
+    def __init__(self, max_workers: int = 5):
         self.executor = concurrent.futures.ThreadPoolExecutor(max_workers=max_workers)
         self.jobs = {}
         self.lock = Lock()
 
-    def add_job(self, func, *args, **kwargs):
-        job = Job(func, *args, **kwargs)
+    def get_jobs(self) -> dict:
+        output = {"jobs": []}
+        for key in redis_client.scan_iter("job:*"):
+            job_id = key.split(":")[1]
+            job_status = self.get_status(job_id)
+            output["jobs"].append({"id": job_id, "data": job_status})
+        
+        return output
+
+    def add_job(self, func, name: str = "", *args, **kwargs) -> str:
+        name = name.replace(" ", "_")
+        job = Job(func, name, *args, **kwargs)
         with self.lock:
             self.jobs[job.id] = job
             job.future = self.executor.submit(self._run_job, job)
-            redis_client.hset(f"job:{job.id}", mapping={"status": job.status, "result": ""})
+            redis_client.hset(
+                f"job:{job.id}", mapping={"status": job.status, "createdAt": job.created_at, "result": ""}
+            )
         return job.id
 
-    def _run_job(self, job):
+    def _run_job(self, job) -> str:
         try:
-            redis_client.hset(f"job:{job.id}", "status", "running")
+            redis_client.hset(f"job:{job.id}", mapping={"status": "running", "createdAt": job.created_at})
             result = job.func(*job.args, **job.kwargs)
-            redis_client.hset(f"job:{job.id}", mapping={"status": "completed", "result": result})
-            return result
+            time_finished = time.time()
+
+            output = ""
+            if "message" in result.keys():
+                output = result["message"]
+            elif "error" in result.keys():
+                output = result["error"]
+
+            redis_client.hset(
+                f"job:{job.id}", mapping={
+                    "status": "completed",
+                    "createdAt": job.created_at,
+                    "finishedAt": time_finished,
+                    "elapsedTime": time_finished - job.created_at,
+                    "result": output
+                    }
+            )
+            return output
         except Exception as e:
-            redis_client.hset(f"job:{job.id}", mapping={"status": "failed", "result": str(e)})
+            time_finished = time.time()
+            redis_client.hset(
+                f"job:{job.id}", mapping={
+                    "status": "failed",
+                    "createdAt": job.created_at,
+                    "finishedAt": time_finished,
+                    "elapsedTime": time_finished - job.created_at,
+                    "result": str(e)
+                    }
+            )
             return str(e)
-        
-    def get_status(self, job_id):
+
+    def get_status(self, job_id: str) -> dict:
         job_data = redis_client.hgetall(f"job:{job_id}")
         if job_data:
             return job_data
         return None
 
-    def cancel_job(self, job_id):
+    def cancel_job(self, job_id: str) -> bool:
         with self.lock:
             job = self.jobs.get(job_id)
             if job and job.future and job.future.cancel():
-                redis_client.hset(f"job:{job_id}", "status", "canceled")
+                time_finished = time.time()
+                redis_client.hset(
+                    f"job:{job.id}", mapping={
+                        "status": "canceled",
+                        "createdAt": job.created_at,
+                        "finishedAt": time_finished,
+                        "elapsedTime": time_finished - job.created_at,
+                        "result": str(e)
+                        }
+                )
                 return True
             return False
 
-    def remove_job(self, job_id):
+    def remove_job(self, job_id: str) -> bool:
         with self.lock:
             job = self.jobs.get(job_id)
             if job and job.future and job.future.cancel():
@@ -61,5 +117,6 @@ class JobScheduler:
                 del self.jobs[job_id]
                 return True
             return False
+
 
 job_scheduler = JobScheduler(max_workers=settings.MAX_WORKERS)

@@ -19,5 +19,6 @@ from django.urls import path, include
 
 urlpatterns = [
     # path("admin/", admin.site.urls),
-    path("soar/", include("SOAR_Endpoint.urls"))
+    path("soar/", include("SOAR_Endpoint.urls")),
+    path("jobs/", include("Jobs_Endpoint.urls"))
 ]

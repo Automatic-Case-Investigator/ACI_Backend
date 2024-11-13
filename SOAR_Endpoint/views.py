@@ -1,7 +1,6 @@
 from .objects.soar_wrapper.soar_wrapper_builder import SOARWrapperBuilder
 from .objects.ai_systems.task_generator.task_generator import TaskGenerator
 from ACI_Backend.objects.job_scheduler.job_scheduler import job_scheduler
-from django.shortcuts import render
 from django.http import JsonResponse
 from . import models
 import requests
@@ -405,7 +404,7 @@ def generate_tasks(request):
         try:
             task_generator = TaskGenerator()
             task_generator.set_soarwrapper(soarwrapper=soar_wrapper)
-            job_scheduler.add_job(task_generator.generate_task, case_data=case_data)
+            job_scheduler.add_job(task_generator.generate_task, name="Task_Generation", case_data=case_data)
         except TypeError as e:
             return JsonResponse({"error": str(e)})
         except requests.exceptions.ConnectionError:
