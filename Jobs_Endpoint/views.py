@@ -7,3 +7,18 @@ def get_jobs(request):
         return JsonResponse(jobs)
     else:
         return JsonResponse({"error": "Invalid method"})
+    
+def remove_job(request):
+    if request.method == "POST":
+        job_id = request.POST.get("job_id")
+        if job_id is None:
+            return JsonResponse({"error": "Required field missing"})
+        
+        
+        success = job_scheduler.remove_job(job_id)
+        if success:
+            return JsonResponse({"message": "Success"})
+        
+        return JsonResponse({"error": "Failed to remove job"})
+    else:
+        return JsonResponse({"error": "Invalid method"})

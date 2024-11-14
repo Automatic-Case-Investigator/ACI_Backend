@@ -36,7 +36,11 @@ class JobScheduler:
         for key in redis_client.scan_iter("job:*"):
             job_id = key.split(":")[1]
             job_status = self.get_status(job_id)
-            output["jobs"].append({"id": job_id, "data": job_status})
+            inner_dict = {"id": job_id}
+            for status_keys in job_status.keys():
+                inner_dict[status_keys] = job_status[status_keys]
+
+            output["jobs"].append(inner_dict)
         
         return output
 
@@ -107,16 +111,21 @@ class JobScheduler:
                         }
                 )
                 return True
-            return False
+        return False
 
     def remove_job(self, job_id: str) -> bool:
         with self.lock:
             job = self.jobs.get(job_id)
-            if job and job.future and job.future.cancel():
+            if job:
+                if job.future and job.future.cancel():
+                    del self.jobs[job_id]
+                    redis_client.delete(f"job:{job_id}")
+                    return True
+                return False
+            else:
                 redis_client.delete(f"job:{job_id}")
-                del self.jobs[job_id]
-                return True
-            return False
+            
+        return False
 
 
 job_scheduler = JobScheduler(max_workers=settings.MAX_WORKERS)

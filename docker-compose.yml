@@ -1,0 +1,22 @@
+version: '3.5'
+
+services:
+  redis:
+    image: redis:latest
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli ping | grep PONG"]
+      interval: 1s
+      timeout: 3s
+      retries: 5
+    command: ["redis-server"]
+    network_mode: "host"
+
+  django:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    network_mode: "host"
+    env_file:
+      - .env
+    depends_on:
+      - redis
