@@ -43,7 +43,8 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
 
-    'SOAR_Endpoint'
+    'SOAR_Endpoint',
+    'Jobs_Endpoint'
 ]
 
 MIDDLEWARE = [
