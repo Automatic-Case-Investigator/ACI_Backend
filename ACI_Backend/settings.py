@@ -80,7 +80,7 @@ WSGI_APPLICATION = 'ACI_Backend.wsgi.application'
 
 # AI backend url
 AI_BACKEND_URL = os.getenv("AI_BACKEND_URL")
-OLLAMA_DIR = os.getenv("OLLAMA_DIR")
+OLLAMA_URL = os.getenv("OLLAMA_URL")
 
 
 # Database
