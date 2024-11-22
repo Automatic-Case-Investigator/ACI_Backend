@@ -101,14 +101,25 @@ class TheHiveWrapper(SOARWrapper):
             url = (
                 f"{self.protocol}//{self.hostname}{self.base_dir}api/v1/task/{task_id}"
             )
-            response = requests.get(
-                url,
-                headers={
-                    "Content-Type": "application/json",
-                    "Authorization": f"Bearer {self.api_key}",
-                    "X-Organisation": f"{org_id}",
-                },
-            )
+
+            response = None
+            if org_id is None:
+                response = requests.get(
+                    url,
+                    headers={
+                        "Content-Type": "application/json",
+                        "Authorization": f"Bearer {self.api_key}",
+                    },
+                )
+            else:
+                response = requests.get(
+                    url,
+                    headers={
+                        "Content-Type": "application/json",
+                        "Authorization": f"Bearer {self.api_key}",
+                        "X-Organisation": f"{org_id}",
+                    },
+                )
 
             return self.format_response(response.json())
         except requests.exceptions.ConnectionError:
@@ -147,20 +158,37 @@ class TheHiveWrapper(SOARWrapper):
     def get_tasks(self, org_id, case_id):
         try:
             url = f"{self.protocol}//{self.hostname}{self.base_dir}api/v1/query"
-            response = requests.post(
-                url,
-                headers={
-                    "Content-Type": "application/json",
-                    "Authorization": f"Bearer {self.api_key}",
-                    "X-Organisation": f"{org_id}",
-                },
-                json={
-                    "query": [
-                        {"_name": "getCase", "idOrName": case_id},
-                        {"_name": "tasks"},
-                    ]
-                },
-            )
+
+            response = None
+            if org_id is None:
+                response = requests.post(
+                    url,
+                    headers={
+                        "Content-Type": "application/json",
+                        "Authorization": f"Bearer {self.api_key}",
+                    },
+                    json={
+                        "query": [
+                            {"_name": "getCase", "idOrName": case_id},
+                            {"_name": "tasks"},
+                        ]
+                    },
+                )
+            else:
+                response = requests.post(
+                    url,
+                    headers={
+                        "Content-Type": "application/json",
+                        "Authorization": f"Bearer {self.api_key}",
+                        "X-Organisation": f"{org_id}",
+                    },
+                    json={
+                        "query": [
+                            {"_name": "getCase", "idOrName": case_id},
+                            {"_name": "tasks"},
+                        ]
+                    },
+                )
 
             output = []
             for task in response.json():

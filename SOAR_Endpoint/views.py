@@ -258,7 +258,7 @@ def get_task(request):
         org_id = request.GET.get("org_id")
         task_id = request.GET.get("task_id")
 
-        if soar_id is None or org_id is None or task_id is None:
+        if soar_id is None or task_id is None:
             return JsonResponse({"error": "Required field missing"})
 
         soar_info_obj = models.SOARInfo.objects.get(id=soar_id)
@@ -322,7 +322,7 @@ def get_tasks(request):
         org_id = request.GET.get("org_id")
         case_id = request.GET.get("case_id")
 
-        if soar_id is None or org_id is None or case_id is None:
+        if soar_id is None or case_id is None:
             return JsonResponse({"error": "Required field missing"})
 
         soar_info_obj = models.SOARInfo.objects.get(id=soar_id)

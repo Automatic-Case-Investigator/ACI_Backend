@@ -44,7 +44,8 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
 
     'SOAR_Endpoint',
-    'Jobs_Endpoint'
+    'Jobs_Endpoint',
+    'AI_Backend_Endpoint'
 ]
 
 MIDDLEWARE = [
@@ -77,8 +78,10 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'ACI_Backend.wsgi.application'
 
-# Ollama url
-OLLAMA_URL = os.getenv("OLLAMA_URL")
+# AI backend url
+AI_BACKEND_URL = os.getenv("AI_BACKEND_URL")
+OLLAMA_DIR = os.getenv("OLLAMA_DIR")
+
 
 # Database
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
