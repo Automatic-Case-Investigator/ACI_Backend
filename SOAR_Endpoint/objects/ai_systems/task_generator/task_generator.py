@@ -44,7 +44,7 @@ class TaskGenerator:
                 ],
             },
         )
-        answer_raw = response.json()["message"]["content"]
+        answer_raw = response.json()["message"]["content"].replace("\r", "")
         tasks = answer_raw.split("\n\n")
 
         for task in tasks:

@@ -118,7 +118,7 @@ def delete_case_data(request):
 def train_model(request):
     if request.method == "POST":
         try:
-            response = requests.post(url=settings.AI_BACKEND_URL + "/task_generation_model/train_model",)
+            response = requests.post(url=settings.AI_BACKEND_URL + "/task_generation_model/train_model/", timeout=None)
 
             return JsonResponse(response.json())
         except requests.exceptions.ConnectionError:
