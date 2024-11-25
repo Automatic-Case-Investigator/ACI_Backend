@@ -116,8 +116,8 @@ class JobScheduler:
     def remove_job(self, job_id: str) -> bool:
         with self.lock:
             job = self.jobs.get(job_id)
-            if job:
-                if job.future and job.future.cancel():
+            if job and job.future and not job.future.done():
+                if job.future.cancel():
                     del self.jobs[job_id]
                     redis_client.delete(f"job:{job_id}")
                     return True

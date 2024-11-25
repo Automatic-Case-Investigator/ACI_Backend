@@ -1,3 +1,4 @@
+from ACI_Backend.objects.job_scheduler.job_scheduler import job_scheduler
 from django.http import JsonResponse
 from django.conf import settings
 from json import JSONDecodeError
@@ -118,9 +119,9 @@ def delete_case_data(request):
 def train_model(request):
     if request.method == "POST":
         try:
-            response = requests.post(url=settings.AI_BACKEND_URL + "/task_generation_model/train_model/", timeout=None)
+            job_scheduler.add_job(requests.post, name="Model_Train", url=settings.AI_BACKEND_URL + "/task_generation_model/train_model/", timeout=None)
 
-            return JsonResponse(response.json())
+            return JsonResponse({"message": "Success"})
         except requests.exceptions.ConnectionError:
             return JsonResponse({"error": "Unable to connect to the AI backend. Please contact the administrator."})
     

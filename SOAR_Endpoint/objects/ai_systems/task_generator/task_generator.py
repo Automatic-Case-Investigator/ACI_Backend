@@ -45,7 +45,9 @@ class TaskGenerator:
             },
         )
         answer_raw = response.json()["message"]["content"].replace("\r", "")
+        print(answer_raw)
         tasks = answer_raw.split("\n\n")
+        seen_tags = []
 
         for task in tasks:
             task_formatted = {"Tag": "", "Title": "", "Description": ""}
@@ -53,9 +55,10 @@ class TaskGenerator:
             task_title_search = re.search("Title: ", task)
             task_description_search = re.search("Description: ", task)
             if task_tag_search and task_title_search and task_description_search:
-                task_formatted["Tag"] = task[
-                    task_tag_search.start() : task_title_search.start()
-                ].split("\n")[0]
+                tag = task[task_tag_search.start() : task_title_search.start()].split("\n")[0]
+                
+                seen_tags.append(tag)
+                task_formatted["Tag"] = tag
                 
                 task_formatted["Title"] = task[
                     task_title_search.start() + 7 : task_description_search.start()
