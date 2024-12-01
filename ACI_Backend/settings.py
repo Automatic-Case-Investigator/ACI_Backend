@@ -45,7 +45,8 @@ INSTALLED_APPS = [
 
     'SOAR_Endpoint',
     'Jobs_Endpoint',
-    'AI_Backend_Endpoint'
+    'AI_Backend_Endpoint',
+    'AI_Backend_Endpoint.TaskGenTrainer_Endpoint'
 ]
 
 MIDDLEWARE = [

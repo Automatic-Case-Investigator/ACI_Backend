@@ -4,6 +4,8 @@ import concurrent.futures
 from redis import Redis
 import uuid
 import time
+import traceback
+import requests
 
 
 redis_client = Redis(
@@ -43,16 +45,29 @@ class JobScheduler:
             output["jobs"].append(inner_dict)
         
         return output
+    
+    def find_jobs(self, name) -> dict:
+        output = {"jobs": []}
+        for key in redis_client.scan_iter(f"job:{name}_*"):
+            job_id = key.split(":")[1]
+            job_status = self.get_status(job_id)
+            inner_dict = {"id": job_id}
+            for status_keys in job_status.keys():
+                inner_dict[status_keys] = job_status[status_keys]
+
+            output["jobs"].append(inner_dict)
+        
+        return output
 
     def add_job(self, func, name: str = "", *args, **kwargs) -> str:
         name = name.replace(" ", "_")
         job = Job(func, name, *args, **kwargs)
         with self.lock:
             self.jobs[job.id] = job
-            job.future = self.executor.submit(self._run_job, job)
             redis_client.hset(
                 f"job:{job.id}", mapping={"status": job.status, "createdAt": job.created_at, "result": ""}
             )
+            job.future = self.executor.submit(self._run_job, job)
         return job.id
 
     def _run_job(self, job) -> str:
@@ -62,10 +77,18 @@ class JobScheduler:
             time_finished = time.time()
 
             output = ""
-            if "message" in result.keys():
-                output = result["message"]
-            elif "error" in result.keys():
-                output = result["error"]
+            if type(result) == requests.models.Response:
+                json_data = result.json()
+                if "message" in json_data.keys():
+                    output = json_data["message"]
+                elif "error" in json_data.keys():
+                    output = json_data["error"]
+
+            elif type(result) == dict:
+                if "message" in result.keys():
+                    output = result["message"]
+                elif "error" in result.keys():
+                    output = result["error"]
 
             redis_client.hset(
                 f"job:{job.id}", mapping={
@@ -78,6 +101,7 @@ class JobScheduler:
             )
             return output
         except Exception as e:
+            print(traceback.format_exc())
             time_finished = time.time()
             redis_client.hset(
                 f"job:{job.id}", mapping={
@@ -85,7 +109,7 @@ class JobScheduler:
                     "createdAt": job.created_at,
                     "finishedAt": time_finished,
                     "elapsedTime": time_finished - job.created_at,
-                    "result": str(e)
+                    "result": traceback.format_exc()
                     }
             )
             return str(e)
