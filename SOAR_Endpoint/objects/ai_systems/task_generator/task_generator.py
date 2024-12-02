@@ -35,7 +35,7 @@ class TaskGenerator:
                 "messages": [
                     {
                         "role": "system",
-                        "content": "You are a soc analyst. You received a case in the soar platform, including detailed information about an alert. Based on the case information, list only the tasks you would suggest to create. For each task, write only one sentence for title and description. Your answer should follow this format:Task # Title: <title> Description: <description>... Here is the decoded data of the case:",
+                        "content": "You are a soc analyst. You received a case in the soar platform, including detailed information about an alert. The title section includes a brief description of the case, and the description section includes detailed information about the case. Based on the case information, list only the tasks you would suggest to create for investigating the incident. For each task, write only one sentence for title and description. Your answer should follow this format:Task # Title: <title> Description: <description>... Here is the decoded data of the case:",
                     },
                     {
                         "role": "user",
@@ -56,6 +56,9 @@ class TaskGenerator:
             task_description_search = re.search("Description: ", task)
             if task_tag_search and task_title_search and task_description_search:
                 tag = task[task_tag_search.start() : task_title_search.start()].split("\n")[0]
+                
+                if tag in seen_tags:
+                    continue
                 
                 seen_tags.append(tag)
                 task_formatted["Tag"] = tag

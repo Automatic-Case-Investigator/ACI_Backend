@@ -57,16 +57,26 @@ class TheHiveWrapper(SOARWrapper):
             }
 
     def get_case(self, case_id):
-        url = f"{self.protocol}//{self.hostname}{self.base_dir}api/v1/case/{case_id}"
-        response = requests.get(
-            url,
-            headers={
-                "Content-Type": "application/json",
-                "Authorization": f"Bearer {self.api_key}",
-            },
-        )
+        try:
+            url = f"{self.protocol}//{self.hostname}{self.base_dir}api/v1/case/{case_id}"
+            response = requests.get(
+                url,
+                headers={
+                    "Content-Type": "application/json",
+                    "Authorization": f"Bearer {self.api_key}",
+                },
+            )
 
-        return self.format_response(response.json())
+            return self.format_response(response.json())
+        except requests.exceptions.ConnectionError:
+            return {
+                "error": "Unable to connect to the SOAR platform. Please make sure you have the correct connection settings."
+            }
+
+        except requests.exceptions.JSONDecodeError:
+            return {
+                "error": "The SOAR URL provided does not provide a valid data format. Please make sure that the soar is running on the URL."
+            }
 
     def get_cases(self, org_id):
         try:
