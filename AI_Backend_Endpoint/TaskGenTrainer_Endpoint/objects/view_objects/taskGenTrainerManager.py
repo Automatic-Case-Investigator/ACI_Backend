@@ -30,7 +30,7 @@ class CaseTemporaryStorageManager(APIView):
         """
         try:
             response = requests.post(
-                url=settings.AI_BACKEND_URL + "/task_generation_model/set_case_data/",
+                url=settings.AI_BACKEND_URL + "/task_generation_model/case_tmp_storage/",
                 json=json.loads(request.body)
             )
 
@@ -42,9 +42,10 @@ class CaseTemporaryStorageManager(APIView):
 
     def delete(self, request, *args, **kwargs):
         try:
-            response = requests.post(
-                url=settings.AI_BACKEND_URL + "/task_generation_model/delete_case_data/",
-                json=json.loads(request.body)
+            id = request.data.get("id")
+            response = requests.delete(
+                url=settings.AI_BACKEND_URL + "/task_generation_model/case_tmp_storage/",
+                data={"id": id}
             )
 
             return Response(response.json(), status=status.HTTP_200_OK)

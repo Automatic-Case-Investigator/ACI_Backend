@@ -16,35 +16,30 @@ class TaskGenerator:
 
     def set_soarwrapper(self, soarwrapper):
         self.soarwrapper = soarwrapper
+        
+    def extract_case_title(self, case_data):
+        if str(type(self.soarwrapper)) == str(thehive_wrapper.TheHiveWrapper):
+            return case_data["title"]
 
     def extract_case_description(self, case_data):
         if str(type(self.soarwrapper)) == str(thehive_wrapper.TheHiveWrapper):
             return case_data["description"]
 
     def generate_task(self, case_data) -> dict:
+        title = self.extract_case_title(case_data)
         description = self.extract_case_description(case_data)
 
         if description is None:
             raise TypeError("Did not specify the SOAR platform")
 
         response = requests.post(
-            settings.OLLAMA_URL,
-            json={
-                "model": "task_generation",
-                "stream": False,
-                "messages": [
-                    {
-                        "role": "system",
-                        "content": "You are a soc analyst. You received a case in the soar platform, including detailed information about an alert. The title section includes a brief description of the case, and the description section includes detailed information about the case. Based on the case information, list only the tasks you would suggest to create for investigating the incident. For each task, write only one sentence for title and description. Your answer should follow this format:Task # Title: <title> Description: <description>... Here is the decoded data of the case:",
-                    },
-                    {
-                        "role": "user",
-                        "content": f"{description}",
-                    },
-                ],
-            },
+            settings.AI_BACKEND_URL + "/task_generation_model/generate/",
+            data={
+                "case_title": title,
+                "case_description": description
+            }
         )
-        answer_raw = response.json()["message"]["content"].replace("\r", "")
+        answer_raw = response.json()["result"]
         print(answer_raw)
         tasks = answer_raw.split("\n\n")
         seen_tags = []
