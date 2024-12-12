@@ -1,7 +1,7 @@
 from django.urls import path
-from .objects.view_objects.SOARInfoManager import SOARInfoManager
-from .objects.view_objects.SOARControlManager import *
-from .objects.view_objects.AISystemContolManager import *
+from .objects.view_objects.SOAR_info_manager import SOARInfoManager
+from .objects.view_objects.SOAR_control_manager import *
+from .objects.view_objects.AI_system_control_manager import *
 
 urlpatterns = [
     path("soar_info/", SOARInfoManager.as_view()),
