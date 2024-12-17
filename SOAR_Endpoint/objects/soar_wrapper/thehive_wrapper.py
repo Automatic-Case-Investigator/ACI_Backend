@@ -46,7 +46,7 @@ class TheHiveWrapper(SOARWrapper):
                 output.append(formatted)
 
             return {"organizations": output}
-        except requests.exceptions.ConnectionError:
+        except requests.exceptions.ConnectionError as e:
             return {
                 "error": "Unable to connect to the SOAR platform. Please make sure you have the correct connection settings."
             }
