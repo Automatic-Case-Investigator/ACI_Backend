@@ -54,6 +54,48 @@ class CaseTemporaryStorageManager(APIView):
         except JSONDecodeError:
             return Response({"error": "Data not formatted properly"}, status=status.HTTP_400_BAD_REQUEST)
 
+class BackupManager(APIView):
+    def post(self, request):
+        try:
+            response = requests.post(url=settings.AI_BACKEND_URL + "/task_generation_model/backup/")
+            return Response(response.json(), status=status.HTTP_200_OK)
+        except requests.exceptions.ConnectionError:
+            return Response({"error": "Unable to connect to the AI backend. Please contact the administrator."}, status=status.HTTP_502_BAD_GATEWAY)
+        except JSONDecodeError:
+            return Response({"error": "Data not formatted properly"}, status=status.HTTP_400_BAD_REQUEST)
+    
+    def delete(self, request):
+        try:
+            delete_name = request.data.get("hash")
+            response = requests.delete(url=settings.AI_BACKEND_URL + "/task_generation_model/backup/", data={"hash": delete_name})
+            return Response(response.json(), status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+class RollbackManager(APIView):
+    def post(self, request):
+        try:
+            restore_name = request.POST.get("hash")
+            if restore_name is None:
+                return Response({"error": "Data not formatted properly"}, status=status.HTTP_400_BAD_REQUEST)
+            else:
+                response = requests.post(url=settings.AI_BACKEND_URL + "/task_generation_model/rollback/", data={"hash": restore_name})
+                return Response(response.json(), status=status.HTTP_200_OK)        
+            
+        except requests.exceptions.ConnectionError:
+            return Response({"error": "Unable to connect to the AI backend. Please contact the administrator."}, status=status.HTTP_502_BAD_GATEWAY)
+        except JSONDecodeError:
+            return Response({"error": "Data not formatted properly"}, status=status.HTTP_400_BAD_REQUEST)
+
+class HistoryManager(APIView):
+    def get(self, request):
+        try:
+            page_number = int(request.GET.get("page"))
+            response = requests.get(url=settings.AI_BACKEND_URL + f"/task_generation_model/history/?page={page_number}")
+            return Response(response.json(), status=status.HTTP_200_OK)
+        except:
+            return Response({"error": "Data not formatted properly"}, status=status.HTTP_400_BAD_REQUEST)
+
 class TaskGenTrainerManager(APIView):
     def post(self, request, *args, **kwargs):
         try:

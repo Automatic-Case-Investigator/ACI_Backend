@@ -1,3 +1,4 @@
+from .objects.view_objects.ai_backend_manager import *
 from django.urls import path, include
 from .objects.view_objects.ai_backend_manager import *
 

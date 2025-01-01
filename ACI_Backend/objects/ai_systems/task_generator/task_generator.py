@@ -43,6 +43,7 @@ class TaskGenerator:
         print(answer_raw)
         tasks = answer_raw.split("\n\n")
         seen_tags = []
+        seen_titles = []
 
         for task in tasks:
             task_formatted = {"Tag": "", "Title": "", "Description": ""}
@@ -52,17 +53,18 @@ class TaskGenerator:
             if task_tag_search and task_title_search and task_description_search:
                 tag = task[task_tag_search.start() : task_title_search.start()].split("\n")[0]
                 
-                if tag in seen_tags:
-                    continue
-                
-                seen_tags.append(tag)
                 task_formatted["Tag"] = tag
-                
                 task_formatted["Title"] = task[
                     task_title_search.start() + 7 : task_description_search.start()
                 ].split("\n")[0]
-                
                 task_formatted["Description"] = task[task_description_search.start() + 13 :].split("\n")[0]
+                
+                if task_formatted["Tag"] in seen_tags or task_formatted["Title"] in seen_titles:
+                    continue
+                
+                seen_tags.append(task_formatted["Tag"])
+                seen_titles.append(task_formatted["Title"])
+                
                 result = self.soarwrapper.create_task_in_case(
                     case_id=case_data["id"], task_data=task_formatted
                 )
