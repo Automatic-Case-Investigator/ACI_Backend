@@ -4,7 +4,7 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 
 
-class JobControlManager(APIView):
+class JobControlView(APIView):
     def get(self, request, *args, **kwargs):
         jobs = job_scheduler.get_jobs()
         return Response(jobs, status=status.HTTP_200_OK)

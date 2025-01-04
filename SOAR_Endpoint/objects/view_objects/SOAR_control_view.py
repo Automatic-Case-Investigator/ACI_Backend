@@ -4,7 +4,7 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from SOAR_Endpoint import models
 
-class OrgControlManager(APIView):
+class OrgControlView(APIView):
     def get(self, request, *args, **kwargs):
         soar_id = request.GET.get("soar_id")
         
@@ -30,7 +30,7 @@ class OrgControlManager(APIView):
 
         return Response(org_data, status=status.HTTP_200_OK)
 
-class CaseControlManager(APIView):
+class CaseControlView(APIView):
     def get(self, request, *args, **kwargs):
         soar_id = request.GET.get("soar_id")
         case_id = request.GET.get("case_id")
@@ -60,7 +60,7 @@ class CaseControlManager(APIView):
             
             return Response(cases_data, status=status.HTTP_200_OK)
         
-class TaskControlManager(APIView):
+class TaskControlView(APIView):
     def get(self, request, *args, **kwargs):
         soar_id = request.GET.get("soar_id")
         org_id = request.GET.get("org_id")
@@ -111,7 +111,7 @@ class TaskControlManager(APIView):
 
         return Response(response, status=status.HTTP_200_OK)
     
-class TaskLogControlManager(APIView):
+class TaskLogControlView(APIView):
     def get(self, request, *args, **kwargs):
         soar_id = request.GET.get("soar_id")
         task_id = request.GET.get("task_id")

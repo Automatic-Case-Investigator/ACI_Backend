@@ -7,7 +7,7 @@ from json import JSONDecodeError
 import requests
 import json
 
-class CaseTemporaryStorageManager(APIView):
+class CaseTemporaryStorageView(APIView):
     def post(self, request, *args, **kwargs):
         """Modifies the already stored case data in redis
 
@@ -54,7 +54,7 @@ class CaseTemporaryStorageManager(APIView):
         except JSONDecodeError:
             return Response({"error": "Data not formatted properly"}, status=status.HTTP_400_BAD_REQUEST)
 
-class BackupManager(APIView):
+class BackupView(APIView):
     def post(self, request):
         try:
             response = requests.post(url=settings.AI_BACKEND_URL + "/task_generation_model/backup/")
@@ -69,10 +69,12 @@ class BackupManager(APIView):
             delete_name = request.data.get("hash")
             response = requests.delete(url=settings.AI_BACKEND_URL + "/task_generation_model/backup/", data={"hash": delete_name})
             return Response(response.json(), status=status.HTTP_200_OK)
-        except Exception as e:
-            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        except requests.exceptions.ConnectionError:
+            return Response({"error": "Unable to connect to the AI backend. Please contact the administrator."}, status=status.HTTP_502_BAD_GATEWAY)
+        except JSONDecodeError:
+            return Response({"error": "Data not formatted properly"}, status=status.HTTP_400_BAD_REQUEST)
 
-class RollbackManager(APIView):
+class RollbackView(APIView):
     def post(self, request):
         try:
             restore_name = request.POST.get("hash")
@@ -87,16 +89,19 @@ class RollbackManager(APIView):
         except JSONDecodeError:
             return Response({"error": "Data not formatted properly"}, status=status.HTTP_400_BAD_REQUEST)
 
-class HistoryManager(APIView):
+class HistoryView(APIView):
     def get(self, request):
         try:
             page_number = int(request.GET.get("page"))
             response = requests.get(url=settings.AI_BACKEND_URL + f"/task_generation_model/history/?page={page_number}")
             return Response(response.json(), status=status.HTTP_200_OK)
-        except:
+        except requests.exceptions.ConnectionError:
+            return Response({"error": "Unable to connect to the AI backend. Please contact the administrator."}, status=status.HTTP_502_BAD_GATEWAY)
+        except JSONDecodeError:
             return Response({"error": "Data not formatted properly"}, status=status.HTTP_400_BAD_REQUEST)
 
-class TaskGenTrainerManager(APIView):
+
+class TaskGenTrainerView(APIView):
     def post(self, request, *args, **kwargs):
         try:
             job_dict = job_scheduler.find_jobs(name="Model_Train")
@@ -133,7 +138,7 @@ class TaskGenTrainerManager(APIView):
         except requests.exceptions.ConnectionError:
             return Response({"error": "Unable to connect to the AI backend. Please contact the administrator."}, status=status.HTTP_502_BAD_GATEWAY)
     
-class RestoreManager(APIView):
+class RestoreView(APIView):
     def post(self, request, *args, **kwargs):
         try:
             job_dict = job_scheduler.find_jobs(name="Model_Reset")
@@ -151,3 +156,13 @@ class RestoreManager(APIView):
             return Response({"message": "Success"}, status=status.HTTP_200_OK)
         except requests.exceptions.ConnectionError:
             return Response({"error": "Unable to connect to the AI backend. Please contact the administrator."}, status=status.HTTP_502_BAD_GATEWAY)
+        
+class CurrentBackupVersionView(APIView):
+    def get(self, request):
+        try:
+            response = requests.get(url=settings.AI_BACKEND_URL + f"/task_generation_model/current_backup_version/")
+            return Response(response.json(), status=status.HTTP_200_OK)
+        except requests.exceptions.ConnectionError:
+            return Response({"error": "Unable to connect to the AI backend. Please contact the administrator."}, status=status.HTTP_502_BAD_GATEWAY)
+        except JSONDecodeError:
+            return Response({"error": "Data not formatted properly"}, status=status.HTTP_400_BAD_REQUEST)

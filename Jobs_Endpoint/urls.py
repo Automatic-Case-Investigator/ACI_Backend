@@ -1,6 +1,6 @@
 from django.urls import path
-from .objects.view_objects.jobControlManager import *
+from .objects.view_objects.job_control_view import *
 
 urlpatterns = [
-    path("", JobControlManager.as_view())
+    path("", JobControlView.as_view())
 ]

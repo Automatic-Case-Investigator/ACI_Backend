@@ -4,7 +4,7 @@ from rest_framework.response import Response
 from django.conf import settings
 import requests
 
-class StatusManager(APIView):
+class StatusView(APIView):
     def get(self, request, *args, **kwargs):
         try:
             response = requests.get(url=settings.AI_BACKEND_URL + "test_connection/")

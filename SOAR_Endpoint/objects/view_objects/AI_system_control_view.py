@@ -7,7 +7,7 @@ from rest_framework.response import Response
 from SOAR_Endpoint import models
 import requests
 
-class TaskGeneratorControlManager(APIView):
+class TaskGeneratorControlView(APIView):
     def post(self, request, *args, **kwargs):
         soar_id = request.POST.get("soar_id")
         case_id = request.POST.get("case_id")

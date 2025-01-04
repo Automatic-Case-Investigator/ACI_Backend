@@ -3,7 +3,7 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from SOAR_Endpoint import models
 
-class SOARInfoManager(APIView):
+class SOARInfoView(APIView):
     def get(self, request, *args, **kwargs):
         soar_objs = models.SOARInfo.objects.all()
         output = {"message": []}
