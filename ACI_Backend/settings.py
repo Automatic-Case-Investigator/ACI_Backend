@@ -106,6 +106,9 @@ REDIS_PORT = os.getenv("REDIS_PORT")
 REDIS_DB = 0
 MAX_WORKERS = 5
 
+# Page sizes
+CASE_PAGE_SIZE = int(os.getenv("CASE_PAGE_SIZE"))
+
 # Password validation
 # https://docs.djangoproject.com/en/5.1/ref/settings/#auth-password-validators
 

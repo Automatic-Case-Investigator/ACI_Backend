@@ -3,6 +3,7 @@ from rest_framework import status
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from SOAR_Endpoint import models
+from django.conf import settings
 
 class OrgControlView(APIView):
     def get(self, request, *args, **kwargs):
@@ -35,6 +36,8 @@ class CaseControlView(APIView):
         soar_id = request.GET.get("soar_id")
         case_id = request.GET.get("case_id")
         org_id = request.GET.get("org_id")
+        search_str = request.GET.get("search")
+        page_number = request.GET.get("page")
 
         if soar_id is None or (case_id is None and org_id is None):
             return Response({"error": "Required field missing"}, status=status.HTTP_400_BAD_REQUEST)
@@ -54,7 +57,10 @@ class CaseControlView(APIView):
 
             return Response(case_data, status=status.HTTP_200_OK)
         else:
-            cases_data = soar_wrapper.get_cases(org_id)
+            if page_number is None or not page_number.isdigit():
+                return Response({"error": "Invalid page number"}, status=status.HTTP_400_BAD_REQUEST)
+            
+            cases_data = soar_wrapper.get_cases(org_id, search_str, settings.CASE_PAGE_SIZE, int(page_number))
             if "error" in cases_data.keys():
                 return Response(cases_data, status=status.HTTP_502_BAD_GATEWAY)
             

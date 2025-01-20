@@ -58,7 +58,9 @@ class TheHiveWrapper(SOARWrapper):
 
     def get_case(self, case_id):
         try:
-            url = f"{self.protocol}//{self.hostname}{self.base_dir}api/v1/case/{case_id}"
+            url = (
+                f"{self.protocol}//{self.hostname}{self.base_dir}api/v1/case/{case_id}"
+            )
             response = requests.get(
                 url,
                 headers={
@@ -78,9 +80,19 @@ class TheHiveWrapper(SOARWrapper):
                 "error": "The SOAR URL provided does not provide a valid data format. Please make sure that the soar is running on the URL."
             }
 
-    def get_cases(self, org_id):
+    def get_cases(self, org_id, search_str: str, page_size: int, page_number: int):
         try:
             url = f"{self.protocol}//{self.hostname}{self.base_dir}api/v1/query"
+            query = {"query": [{"_name": "listCase"}]}
+            if search_str is not None and len(search_str) > 0:
+                query["query"].append(
+                    {
+                        "_name": "filter",
+                        "_like": {"_field": "title", "_value": f"{search_str}"},
+                    }
+                )
+            
+            # Attempts to get the total number of cases
             response = requests.post(
                 url,
                 headers={
@@ -88,14 +100,33 @@ class TheHiveWrapper(SOARWrapper):
                     "Authorization": f"Bearer {self.api_key}",
                     "X-Organisation": f"{org_id}",
                 },
-                json={"query": [{"_name": "listCase"}]},
+                json=query,
+            )
+            case_count = len(response.json())
+            
+            # Fetches the cases with pagination
+            query["query"].append(
+                {
+                    "_name": "page",
+                    "from": page_size * (page_number - 1),
+                    "to": page_size * page_number,
+                }
+            )
+            response = requests.post(
+                url,
+                headers={
+                    "Content-Type": "application/json",
+                    "Authorization": f"Bearer {self.api_key}",
+                    "X-Organisation": f"{org_id}",
+                },
+                json=query,
             )
 
             output = []
             for case_data in response.json():
                 formatted = self.format_response(case_data)
                 output.append(formatted)
-            return {"cases": output}
+            return {"total_count": case_count, "cases": output}
         except requests.exceptions.ConnectionError:
             return {
                 "error": "Unable to connect to the SOAR platform. Please make sure you have the correct connection settings."
