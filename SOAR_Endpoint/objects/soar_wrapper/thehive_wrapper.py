@@ -91,7 +91,7 @@ class TheHiveWrapper(SOARWrapper):
                         "_like": {"_field": "title", "_value": f"{search_str}"},
                     }
                 )
-            
+
             # Attempts to get the total number of cases
             response = requests.post(
                 url,
@@ -103,7 +103,7 @@ class TheHiveWrapper(SOARWrapper):
                 json=query,
             )
             case_count = len(response.json())
-            
+
             # Fetches the cases with pagination
             query["query"].append(
                 {
@@ -258,7 +258,8 @@ class TheHiveWrapper(SOARWrapper):
                 },
                 json={
                     "query": [
-                        {"_name": "listLog", "idOrName": task_id},
+                        {"_name": "getTask", "idOrName": task_id},
+                        {"_name": "logs"},
                     ]
                 },
             )
