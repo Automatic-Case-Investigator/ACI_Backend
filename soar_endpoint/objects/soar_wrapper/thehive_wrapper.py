@@ -104,23 +104,24 @@ class TheHiveWrapper(SOARWrapper):
             )
             case_count = len(response.json())
 
-            # Fetches the cases with pagination
-            query["query"].append(
-                {
-                    "_name": "page",
-                    "from": page_size * (page_number - 1),
-                    "to": page_size * page_number,
-                }
-            )
-            response = requests.post(
-                url,
-                headers={
-                    "Content-Type": "application/json",
-                    "Authorization": f"Bearer {self.api_key}",
-                    "X-Organisation": f"{org_id}",
-                },
-                json=query,
-            )
+            if page_number is not None:
+                # Fetches the cases with pagination
+                query["query"].append(
+                    {
+                        "_name": "page",
+                        "from": page_size * (page_number - 1),
+                        "to": page_size * page_number,
+                    }
+                )
+                response = requests.post(
+                    url,
+                    headers={
+                        "Content-Type": "application/json",
+                        "Authorization": f"Bearer {self.api_key}",
+                        "X-Organisation": f"{org_id}",
+                    },
+                    json=query,
+                )
 
             output = []
             for case_data in response.json():

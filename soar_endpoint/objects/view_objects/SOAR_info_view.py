@@ -1,7 +1,7 @@
 from rest_framework import status
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from SOAR_Endpoint import models
+from soar_endpoint import models
 
 class SOARInfoView(APIView):
     def get(self, request, *args, **kwargs):

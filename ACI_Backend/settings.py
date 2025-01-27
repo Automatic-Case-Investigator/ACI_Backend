@@ -46,10 +46,11 @@ INSTALLED_APPS = [
     'rest_framework',
     'corsheaders',
 
-    'SOAR_Endpoint',
-    'Jobs_Endpoint',
-    'AI_System_Endpoint',
-    'AI_System_Endpoint.Task_Generation'
+    'soar_endpoint',
+    'jobs_endpoint',
+    'ai_system_endpoint',
+    'ai_system_endpoint.task_generation',
+    'ai_system_endpoint.automatic_investigation'
 ]
 
 MIDDLEWARE = [

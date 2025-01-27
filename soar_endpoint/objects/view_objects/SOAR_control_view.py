@@ -1,8 +1,8 @@
-from SOAR_Endpoint.objects.soar_wrapper.soar_wrapper_builder import SOARWrapperBuilder
+from soar_endpoint.objects.soar_wrapper.soar_wrapper_builder import SOARWrapperBuilder
 from rest_framework import status
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from SOAR_Endpoint import models
+from soar_endpoint import models
 from django.conf import settings
 
 class OrgControlView(APIView):
@@ -57,10 +57,14 @@ class CaseControlView(APIView):
 
             return Response(case_data, status=status.HTTP_200_OK)
         else:
-            if page_number is None or not page_number.isdigit():
+            cases_data = None
+            if page_number is None:
+                cases_data = soar_wrapper.get_cases(org_id, search_str, settings.CASE_PAGE_SIZE, None)
+            elif not page_number.isdigit():
                 return Response({"error": "Invalid page number"}, status=status.HTTP_400_BAD_REQUEST)
+            else:
+                cases_data = soar_wrapper.get_cases(org_id, search_str, settings.CASE_PAGE_SIZE, int(page_number))
             
-            cases_data = soar_wrapper.get_cases(org_id, search_str, settings.CASE_PAGE_SIZE, int(page_number))
             if "error" in cases_data.keys():
                 return Response(cases_data, status=status.HTTP_502_BAD_GATEWAY)
             

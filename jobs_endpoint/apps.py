@@ -1,6 +1,6 @@
 from django.apps import AppConfig
 
 
-class AiBackendEndpointConfig(AppConfig):
+class JobsEndpointConfig(AppConfig):
     default_auto_field = 'django.db.models.BigAutoField'
-    name = 'AI_System_Endpoint'
+    name = 'jobs_endpoint'

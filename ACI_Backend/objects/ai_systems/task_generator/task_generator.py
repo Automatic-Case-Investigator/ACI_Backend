@@ -4,8 +4,8 @@ import requests
 import re
 
 module_spec = importlib.util.spec_from_file_location(
-    "SOAR_Endpoint.objects.soar_wrapper.thehive_wrapper",
-    "SOAR_Endpoint/objects/soar_wrapper/thehive_wrapper.py",
+    "soar_endpoint.objects.soar_wrapper.thehive_wrapper",
+    "soar_endpoint/objects/soar_wrapper/thehive_wrapper.py",
 )
 thehive_wrapper = importlib.util.module_from_spec(module_spec)
 module_spec.loader.exec_module(thehive_wrapper)

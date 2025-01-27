@@ -1,6 +1,6 @@
 from django.apps import AppConfig
 
 
-class JobsEndpointConfig(AppConfig):
+class SoarEndpointConfig(AppConfig):
     default_auto_field = 'django.db.models.BigAutoField'
-    name = 'Jobs_Endpoint'
+    name = 'soar_endpoint'

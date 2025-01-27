@@ -17,7 +17,7 @@ Including another URLconf
 from django.urls import path, include
 
 urlpatterns = [
-    path("soar/", include("SOAR_Endpoint.urls")),
-    path("jobs/", include("Jobs_Endpoint.urls")),
-    path("ai_backend/", include("AI_System_Endpoint.urls"))
+    path("soar/", include("soar_endpoint.urls")),
+    path("jobs/", include("jobs_endpoint.urls")),
+    path("ai_backend/", include("ai_system_endpoint.urls"))
 ]
