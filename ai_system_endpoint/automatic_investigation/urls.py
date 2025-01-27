@@ -6,6 +6,7 @@ from .objects.view_objects.siem_investigation_view import *
 
 urlpatterns = [
     # TODO: Paths for investigation main control flow activation (investigation should start here)
+    path("investigate/", AutomaticInvestigationView.as_view())
 
     # TODO: Paths for activity generation (for misc usage)
     

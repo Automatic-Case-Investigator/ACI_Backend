@@ -29,8 +29,11 @@ class TaskGenerator:
         title = self.extract_case_title(case_data)
         description = self.extract_case_description(case_data)
 
+        if title is None:
+            raise TypeError("Title is not provided")
+        
         if description is None:
-            raise TypeError("Did not specify the SOAR platform")
+            raise TypeError("Description is not provided")
 
         response = requests.post(
             settings.AI_BACKEND_URL + "/task_generation_model/generate/",

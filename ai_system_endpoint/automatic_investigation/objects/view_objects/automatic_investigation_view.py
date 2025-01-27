@@ -5,9 +5,6 @@ from ACI_Backend.objects.job_scheduler.job_scheduler import job_scheduler
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework import status
-from django.conf import settings
-import json
-
 
 class AutomaticInvestigationView(APIView):
     def post(self, request, *args, **kwargs):
@@ -25,7 +22,7 @@ class AutomaticInvestigationView(APIView):
 
         if generate_activities is None:
             generate_activities = False
-        elif generate_activities.isdigit():
+        elif not generate_activities.isdigit():
             return Response(
                 {"error": 'Parameter "generate_activities" not formatted properly'},
                 status=status.HTTP_400_BAD_REQUEST,
@@ -35,7 +32,7 @@ class AutomaticInvestigationView(APIView):
 
         if investigate_siem is None:
             investigate_siem = False
-        elif investigate_siem.isdigit():
+        elif not investigate_siem.isdigit():
             return Response(
                 {"error": 'Parameter "investigate_siem" not formatted properly'},
                 status=status.HTTP_400_BAD_REQUEST,
@@ -53,7 +50,7 @@ class AutomaticInvestigationView(APIView):
 
         # Add to job queue for investigation
         job_scheduler.add_job(
-            investigator.investigate(),
+            investigator.investigate,
             name="Case_Investigation",
         )
 
