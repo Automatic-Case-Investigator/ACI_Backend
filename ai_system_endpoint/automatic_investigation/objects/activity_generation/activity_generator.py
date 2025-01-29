@@ -43,6 +43,13 @@ class ActivityGenerator:
             }
         )
         answer_raw = response.json()["result"]
-        print(answer_raw)
+        activities = answer_raw.split("\n")
+        output = []
         
-        return {"message": "Success"}
+        for activity in activities:
+            bulletpoint_search = re.search(" *[0-9]+. +", activity)
+            if bulletpoint_search is not None:
+                activity_string = re.sub(" *[0-9]+. +", "", activity)
+                output.append(activity_string)
+                
+        return {"activities": output}

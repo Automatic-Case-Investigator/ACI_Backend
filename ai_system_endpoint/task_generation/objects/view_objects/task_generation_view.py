@@ -1,5 +1,5 @@
+from ai_system_endpoint.task_generation.objects.task_generation.task_generator import TaskGenerator
 from soar_endpoint.objects.soar_wrapper.soar_wrapper_builder import SOARWrapperBuilder
-from ACI_Backend.objects.ai_systems.task_generator.task_generator import TaskGenerator
 from ACI_Backend.objects.job_scheduler.job_scheduler import job_scheduler
 from rest_framework.response import Response
 from rest_framework.views import APIView

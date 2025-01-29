@@ -1,4 +1,4 @@
-from ACI_Backend.objects.ai_systems.activity_generator.activity_generator import ActivityGenerator
+from ai_system_endpoint.automatic_investigation.objects.activity_generation.activity_generator import ActivityGenerator
 from soar_endpoint.objects.soar_wrapper.soar_wrapper_builder import SOARWrapperBuilder
 from soar_endpoint import models
 
@@ -38,7 +38,9 @@ class Investigator:
             for task in tasks_data["tasks"]:
                 activity_generator = ActivityGenerator()
                 activity_generator.set_soarwrapper(soarwrapper=soar_wrapper)
-                activity_generator.generate_activity(task)
+                response = activity_generator.generate_activity(task)
+                for activity in response["activities"]:
+                    soar_wrapper.create_task_log(task["id"], activity)
 
         if self.investigate_siem:
             # TODO: complete the siem investigation control flow
