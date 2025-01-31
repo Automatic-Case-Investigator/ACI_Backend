@@ -33,12 +33,13 @@ class Investigator:
             return {"error": str(e)}
 
         if self.generate_activities:
+            case_title = soar_wrapper.get_case(self.case_id)["title"]
             tasks_data = soar_wrapper.get_tasks(self.org_id, self.case_id)
             
             for task in tasks_data["tasks"]:
                 activity_generator = ActivityGenerator()
                 activity_generator.set_soarwrapper(soarwrapper=soar_wrapper)
-                response = activity_generator.generate_activity(task)
+                response = activity_generator.generate_activity(case_title, task)
                 for activity in response["activities"]:
                     soar_wrapper.create_task_log(task["id"], activity)
 
