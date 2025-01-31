@@ -47,10 +47,15 @@ class ActivityGenerator:
         activities = answer_raw.split("\n")
         output = []
         
+        list_regex = " *[0-9]+. +"
+        bulletpoint_regex = " *- +"
+        
         for activity in activities:
-            bulletpoint_search = re.search(" *[0-9]+. +", activity)
-            if bulletpoint_search is not None:
-                activity_string = re.sub(" *[0-9]+. +", "", activity)
+            list_search = re.search(list_regex, activity)
+            bulletpoint_search = re.search(bulletpoint_regex, activity)
+            if list_search is not None or bulletpoint_search is not None:
+                activity_string = re.sub(list_regex, "", activity)
+                activity_string = re.sub(bulletpoint_regex, "", activity_string)
                 output.append(activity_string)
                 
         return {"activities": output}
