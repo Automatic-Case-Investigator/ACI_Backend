@@ -1,5 +1,6 @@
 from django.conf import settings
 from threading import Lock
+from pebble import ThreadPool
 import concurrent.futures
 from redis import Redis
 import uuid
@@ -29,7 +30,7 @@ class Job:
 
 class JobScheduler:
     def __init__(self, max_workers: int = 5):
-        self.executor = concurrent.futures.ThreadPoolExecutor(max_workers=max_workers)
+        self.executor = ThreadPool(max_workers=max_workers)
         self.jobs = {}
         self.lock = Lock()
 
@@ -67,7 +68,7 @@ class JobScheduler:
             redis_client.hset(
                 f"job:{job.id}", mapping={"status": job.status, "createdAt": job.created_at, "result": ""}
             )
-            job.future = self.executor.submit(self._run_job, job)
+            job.future = self.executor.schedule(self._run_job, args=[job])   
         return job.id
 
     def _run_job(self, job) -> str:
@@ -140,14 +141,11 @@ class JobScheduler:
     def remove_job(self, job_id: str) -> bool:
         with self.lock:
             job = self.jobs.get(job_id)
-            if job and job.future and not job.future.done():
+            if job and job.future:
                 if job.future.cancel():
                     del self.jobs[job_id]
-                    redis_client.delete(f"job:{job_id}")
-                    return True
-                return False
-            else:
                 redis_client.delete(f"job:{job_id}")
+                return True
             
         return False
 
