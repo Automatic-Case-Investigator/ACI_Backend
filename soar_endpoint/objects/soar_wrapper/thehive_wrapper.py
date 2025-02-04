@@ -80,10 +80,31 @@ class TheHiveWrapper(SOARWrapper):
                 "error": "The SOAR URL provided does not provide a valid data format. Please make sure that the soar is running on the URL."
             }
 
-    def get_cases(self, org_id, search_str: str, page_size: int, page_number: int):
+    def get_cases(self, org_id, search_str: str, page_size: int, time_sort_type: int, page_number: int):
+        query_update_funcs = {
+            0: lambda query : query["query"].append({
+                "_name": "sort",
+                "_fields": [
+                    {
+                        "_createdAt": "desc"
+                    }
+                ]
+            }) or query,
+            1: lambda query : query["query"].append({
+                "_name": "sort",
+                "_fields": [
+                    {
+                        "_createdAt": "asc"
+                    }
+                ]
+            }) or query
+        }
         try:
             url = f"{self.protocol}//{self.hostname}{self.base_dir}api/v1/query"
             query = {"query": [{"_name": "listCase"}]}
+            if time_sort_type is not None:
+                query = query_update_funcs[time_sort_type](query)
+            
             if search_str is not None and len(search_str) > 0:
                 query["query"].append(
                     {
@@ -91,7 +112,7 @@ class TheHiveWrapper(SOARWrapper):
                         "_like": {"_field": "title", "_value": f"{search_str}"},
                     }
                 )
-
+            
             # Attempts to get the total number of cases
             response = requests.post(
                 url,

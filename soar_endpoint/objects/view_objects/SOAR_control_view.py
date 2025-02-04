@@ -37,6 +37,7 @@ class CaseControlView(APIView):
         case_id = request.GET.get("case_id")
         org_id = request.GET.get("org_id")
         search_str = request.GET.get("search")
+        time_sort_type = request.GET.get("time_sort_type")
         page_number = request.GET.get("page")
 
         if soar_id is None or (case_id is None and org_id is None):
@@ -58,12 +59,18 @@ class CaseControlView(APIView):
             return Response(case_data, status=status.HTTP_200_OK)
         else:
             cases_data = None
-            if page_number is None:
-                cases_data = soar_wrapper.get_cases(org_id, search_str, settings.CASE_PAGE_SIZE, None)
-            elif not page_number.isdigit():
+            
+            if page_number is not None and not page_number.isdigit():
                 return Response({"error": "Invalid page number"}, status=status.HTTP_400_BAD_REQUEST)
-            else:
-                cases_data = soar_wrapper.get_cases(org_id, search_str, settings.CASE_PAGE_SIZE, int(page_number))
+            elif page_number is not None:
+                page_number = int(page_number)
+                
+            if time_sort_type is not None and not time_sort_type.isdigit():
+                return Response({"error": "Invalid time sort type"}, status=status.HTTP_400_BAD_REQUEST)
+            elif time_sort_type is not None:
+                time_sort_type = int(time_sort_type)
+
+            cases_data = soar_wrapper.get_cases(org_id, search_str, settings.CASE_PAGE_SIZE, time_sort_type, page_number)
             
             if "error" in cases_data.keys():
                 return Response(cases_data, status=status.HTTP_502_BAD_GATEWAY)
