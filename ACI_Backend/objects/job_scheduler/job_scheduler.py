@@ -1,7 +1,6 @@
 from django.conf import settings
 from threading import Lock
 from pebble import ThreadPool
-import concurrent.futures
 from redis import Redis
 import uuid
 import time
@@ -146,6 +145,8 @@ class JobScheduler:
                     del self.jobs[job_id]
                 redis_client.delete(f"job:{job_id}")
                 return True
+            
+            redis_client.delete(f"job:{job_id}")
             
         return False
 
