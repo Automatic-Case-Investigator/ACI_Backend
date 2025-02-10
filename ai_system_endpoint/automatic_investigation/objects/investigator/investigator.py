@@ -1,6 +1,9 @@
-from ai_system_endpoint.automatic_investigation.objects.activity_generation.activity_generator import ActivityGenerator
+from ai_system_endpoint.automatic_investigation.objects.activity_generation.activity_generator import (
+    ActivityGenerator,
+)
 from soar_endpoint.objects.soar_wrapper.soar_wrapper_builder import SOARWrapperBuilder
 from soar_endpoint import models
+from django.conf import settings
 
 
 class Investigator:
@@ -33,13 +36,27 @@ class Investigator:
             return {"error": str(e)}
 
         if self.generate_activities:
-            case_title = soar_wrapper.get_case(self.case_id)["title"]
+            case_data = soar_wrapper.get_case(self.case_id)
+            case_title = case_data["title"][: settings.MAXIMUM_STRING_LENGTH]
+            case_description = case_data["description"][
+                : settings.MAXIMUM_STRING_LENGTH
+            ]
             tasks_data = soar_wrapper.get_tasks(self.org_id, self.case_id)
-            
+
             for task in tasks_data["tasks"]:
                 activity_generator = ActivityGenerator()
                 activity_generator.set_soarwrapper(soarwrapper=soar_wrapper)
-                response = activity_generator.generate_activity(case_title, task)
+                response = activity_generator.generate_activity(
+                    case_title=case_title,
+                    case_description=case_description,
+                    task_data={
+                        "title": task["title"][: settings.MAXIMUM_STRING_LENGTH],
+                        "description": task["description"][
+                            : settings.MAXIMUM_STRING_LENGTH
+                        ],
+                    },
+                )
+
                 for activity in response["activities"]:
                     soar_wrapper.create_task_log(task["id"], activity)
 

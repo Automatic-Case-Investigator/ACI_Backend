@@ -107,6 +107,9 @@ REDIS_PORT = os.getenv("REDIS_PORT")
 REDIS_DB = 0
 MAX_WORKERS = 5
 
+# Maximum string length
+MAXIMUM_STRING_LENGTH = int(os.getenv("MAXIMUM_STRING_LENGTH"))
+
 # Page sizes
 CASE_PAGE_SIZE = int(os.getenv("CASE_PAGE_SIZE"))
 

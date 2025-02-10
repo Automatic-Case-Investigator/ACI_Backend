@@ -25,7 +25,7 @@ class ActivityGenerator:
         if str(type(self.soarwrapper)) == str(thehive_wrapper.TheHiveWrapper):
             return task_data["description"]
         
-    def generate_activity(self, case_title, task_data) -> dict:
+    def generate_activity(self, case_title, case_description, task_data) -> dict:
         title = self.extract_task_title(task_data)
         description = self.extract_task_description(task_data)
 
@@ -39,6 +39,7 @@ class ActivityGenerator:
             settings.AI_BACKEND_URL + "/activity_generation_model/generate/",
             data={
                 "case_title": case_title,
+                "case_description": case_description,
                 "task_title": title,
                 "task_description": description
             }

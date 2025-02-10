@@ -30,6 +30,9 @@ class TaskGenerationView(APIView):
         case_data = soar_wrapper.get_case(case_id)
         if "error" in case_data.keys():
             return Response(case_data, status=status.HTTP_400_BAD_REQUEST)
+        
+        case_data["title"] = case_data["title"][:settings.MAXIMUM_STRING_LENGTH]
+        case_data["description"] = case_data["description"][:settings.MAXIMUM_STRING_LENGTH]
 
         try:
             task_generator = TaskGenerator()
