@@ -1,6 +1,9 @@
 from ai_system_endpoint.automatic_investigation.objects.activity_generation.activity_generator import (
     ActivityGenerator,
 )
+from ai_system_endpoint.automatic_investigation.objects.query_generation.query_generator import (
+    QueryGenerator,
+)
 from soar_endpoint.objects.soar_wrapper.soar_wrapper_builder import SOARWrapperBuilder
 from soar_endpoint import models
 from django.conf import settings
@@ -35,14 +38,20 @@ class Investigator:
         except TypeError as e:
             return {"error": str(e)}
 
-        if self.generate_activities:
+        case_data = None
+        case_title = ""
+        case_description = ""
+        task_data = None
+
+        if self.generate_activities or self.investigate_siem:
             case_data = soar_wrapper.get_case(self.case_id)
             case_title = case_data["title"][: settings.MAXIMUM_STRING_LENGTH]
             case_description = case_data["description"][
                 : settings.MAXIMUM_STRING_LENGTH
             ]
             tasks_data = soar_wrapper.get_tasks(self.org_id, self.case_id)
-
+            
+        if self.generate_activities:
             for task in tasks_data["tasks"]:
                 activity_generator = ActivityGenerator()
                 activity_generator.set_soarwrapper(soarwrapper=soar_wrapper)
@@ -56,7 +65,7 @@ class Investigator:
                         ],
                     },
                 )
-
+                
                 for activity in response["activities"]:
                     soar_wrapper.create_task_log(task["id"], activity)
 
@@ -68,6 +77,38 @@ class Investigator:
             # futher iterations: full log & activity -> search list
             # go over each search result, identify whether we are interested
             # If interested, add the log to the activity log. repeat the process several times
-            pass
 
+            for task in tasks_data["tasks"]:
+                activities = soar_wrapper.get_task_logs(task["id"])
+                for activity in activities:
+                    
+                    # Create and run query generator
+                    query_generator = QueryGenerator()
+                    query_generator.set_soarwrapper(soarwrapper=soar_wrapper)
+                    response = query_generator.generate_query(
+                        case_title=case_title,
+                        case_description=case_description,
+                        task_data={
+                            "title": task["title"][: settings.MAXIMUM_STRING_LENGTH],
+                            "description": task["description"][
+                                : settings.MAXIMUM_STRING_LENGTH
+                            ],
+                        },
+                        activity=activity["message"]
+                    )
+                    
+                    # go over each query one by one
+                    if response["is_query"]:
+                        print(response["result"])
+                        final_message = activity["message"] + "\n"
+                        for query in response["result"]:
+                            final_message += query + "\n"
+                            
+                        soar_wrapper.update_task_log(activity["id"], final_message)
+                    
+                    # otherwise just write the info gathered from description
+                    else:
+                        soar_wrapper.update_task_log(activity["id"], activity["message"] + "\n" + response["result"])
+                    
+                    
         return {"message": "Success"}

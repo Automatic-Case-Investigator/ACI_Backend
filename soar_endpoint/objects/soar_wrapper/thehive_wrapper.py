@@ -3,6 +3,11 @@ import requests
 
 
 class TheHiveWrapper(SOARWrapper):
+    unable_to_connect_message = {
+        "error": "Unable to connect to the SOAR platform. Please make sure you have the correct connection settings."
+    }
+    success_message = {"message" : "Success"}
+
     def __init__(self, protocol, name, hostname, base_dir, api_key):
         SOARWrapper.__init__(
             self,
@@ -47,9 +52,7 @@ class TheHiveWrapper(SOARWrapper):
 
             return {"organizations": output}
         except requests.exceptions.ConnectionError as e:
-            return {
-                "error": "Unable to connect to the SOAR platform. Please make sure you have the correct connection settings."
-            }
+            return TheHiveWrapper.unable_to_connect_message
 
         except requests.exceptions.JSONDecodeError:
             return {
@@ -71,40 +74,37 @@ class TheHiveWrapper(SOARWrapper):
 
             return self.format_response(response.json())
         except requests.exceptions.ConnectionError:
-            return {
-                "error": "Unable to connect to the SOAR platform. Please make sure you have the correct connection settings."
-            }
+            return TheHiveWrapper.unable_to_connect_message
 
         except requests.exceptions.JSONDecodeError:
             return {
                 "error": "The SOAR URL provided does not provide a valid data format. Please make sure that the soar is running on the URL."
             }
 
-    def get_cases(self, org_id, search_str: str, page_size: int, time_sort_type: int, page_number: int):
+    def get_cases(
+        self,
+        org_id,
+        search_str: str,
+        page_size: int,
+        time_sort_type: int,
+        page_number: int,
+    ):
         query_update_funcs = {
-            0: lambda query : query["query"].append({
-                "_name": "sort",
-                "_fields": [
-                    {
-                        "_createdAt": "desc"
-                    }
-                ]
-            }) or query,
-            1: lambda query : query["query"].append({
-                "_name": "sort",
-                "_fields": [
-                    {
-                        "_createdAt": "asc"
-                    }
-                ]
-            }) or query
+            0: lambda query: query["query"].append(
+                {"_name": "sort", "_fields": [{"_createdAt": "desc"}]}
+            )
+            or query,
+            1: lambda query: query["query"].append(
+                {"_name": "sort", "_fields": [{"_createdAt": "asc"}]}
+            )
+            or query,
         }
         try:
             url = f"{self.protocol}//{self.hostname}{self.base_dir}api/v1/query"
             query = {"query": [{"_name": "listCase"}]}
             if time_sort_type is not None:
                 query = query_update_funcs[time_sort_type](query)
-            
+
             if search_str is not None and len(search_str) > 0:
                 query["query"].append(
                     {
@@ -112,7 +112,7 @@ class TheHiveWrapper(SOARWrapper):
                         "_like": {"_field": "title", "_value": f"{search_str}"},
                     }
                 )
-            
+
             # Attempts to get the total number of cases
             response = requests.post(
                 url,
@@ -150,9 +150,7 @@ class TheHiveWrapper(SOARWrapper):
                 output.append(formatted)
             return {"total_count": case_count, "cases": output}
         except requests.exceptions.ConnectionError:
-            return {
-                "error": "Unable to connect to the SOAR platform. Please make sure you have the correct connection settings."
-            }
+            return TheHiveWrapper.unable_to_connect_message
 
         except requests.exceptions.JSONDecodeError:
             return {
@@ -186,9 +184,7 @@ class TheHiveWrapper(SOARWrapper):
 
             return self.format_response(response.json())
         except requests.exceptions.ConnectionError:
-            return {
-                "error": "Unable to connect to the SOAR platform. Please make sure you have the correct connection settings."
-            }
+            return TheHiveWrapper.unable_to_connect_message
 
         except requests.exceptions.JSONDecodeError:
             return {
@@ -207,11 +203,9 @@ class TheHiveWrapper(SOARWrapper):
                     "Authorization": f"Bearer {self.api_key}",
                 },
             )
-            return {"message": "Success"}
+            return TheHiveWrapper.success_message
         except requests.exceptions.ConnectionError:
-            return {
-                "error": "Unable to connect to the SOAR platform. Please make sure you have the correct connection settings."
-            }
+            return TheHiveWrapper.unable_to_connect_message
 
         except requests.exceptions.JSONDecodeError:
             return {
@@ -260,9 +254,7 @@ class TheHiveWrapper(SOARWrapper):
 
             return {"tasks": output}
         except requests.exceptions.ConnectionError:
-            return {
-                "error": "Unable to connect to the SOAR platform. Please make sure you have the correct connection settings."
-            }
+            return TheHiveWrapper.unable_to_connect_message
 
         except requests.exceptions.JSONDecodeError:
             return {
@@ -287,15 +279,13 @@ class TheHiveWrapper(SOARWrapper):
             )
 
             output = []
-            for task in response.json():
-                formatted = self.format_response(task)
+            for log in response.json():
+                formatted = self.format_response(log)
                 output.append(formatted)
 
             return {"task_logs": output}
         except requests.exceptions.ConnectionError:
-            return {
-                "error": "Unable to connect to the SOAR platform. Please make sure you have the correct connection settings."
-            }
+            return TheHiveWrapper.unable_to_connect_message
 
         except requests.exceptions.JSONDecodeError:
             return {
@@ -315,11 +305,26 @@ class TheHiveWrapper(SOARWrapper):
                     "message": message,
                 },
             )
-            return {"message": "Success"}
+            return TheHiveWrapper.success_message
         except requests.exceptions.ConnectionError:
-            return {
-                "error": "Unable to connect to the SOAR platform. Please make sure you have the correct connection settings."
-            }
+            return TheHiveWrapper.unable_to_connect_message
+
+    def update_task_log(self, log_id, message):
+        url = f"{self.protocol}//{self.hostname}{self.base_dir}api/v1/log/{log_id}"
+        try:
+            requests.patch(
+                url,
+                headers={
+                    "Content-Type": "application/json",
+                    "Authorization": f"Bearer {self.api_key}",
+                },
+                json={
+                    "message": message,
+                },
+            )
+            return TheHiveWrapper.success_message
+        except requests.exceptions.ConnectionError:
+            return TheHiveWrapper.unable_to_connect_message
 
     def create_task_in_case(self, case_id, task_data):
         try:
@@ -337,8 +342,6 @@ class TheHiveWrapper(SOARWrapper):
                     "group": "Automatic Case Investigator",
                 },
             )
-            return {"message": "Success"}
+            return TheHiveWrapper.success_message
         except requests.exceptions.ConnectionError:
-            return {
-                "error": "Unable to connect to the SOAR platform. Please make sure you have the correct connection settings."
-            }
+            return TheHiveWrapper.unable_to_connect_message
