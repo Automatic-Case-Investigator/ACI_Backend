@@ -79,8 +79,8 @@ class Investigator:
             # If interested, add the log to the activity log. repeat the process several times
 
             for task in tasks_data["tasks"]:
-                activities = soar_wrapper.get_task_logs(task["id"])
-                for activity in activities:
+                task_log_result = soar_wrapper.get_task_logs(task["id"])
+                for activity in task_log_result["task_logs"]:
                     
                     # Create and run query generator
                     query_generator = QueryGenerator()
@@ -94,21 +94,20 @@ class Investigator:
                                 : settings.MAXIMUM_STRING_LENGTH
                             ],
                         },
-                        activity=activity["message"]
+                        activity=activity
                     )
-                    
+                                        
                     # go over each query one by one
                     if response["is_query"]:
-                        print(response["result"])
-                        final_message = activity["message"] + "\n"
+                        final_message = f"{activity["message"]}\n\nAutomated SIEM Investigation:\n\n"
                         for query in response["result"]:
-                            final_message += query + "\n"
+                            final_message += str(query) + "\n"
                             
                         soar_wrapper.update_task_log(activity["id"], final_message)
                     
                     # otherwise just write the info gathered from description
                     else:
-                        soar_wrapper.update_task_log(activity["id"], activity["message"] + "\n" + response["result"])
+                        soar_wrapper.update_task_log(activity["id"], response["result"])
                     
                     
         return {"message": "Success"}

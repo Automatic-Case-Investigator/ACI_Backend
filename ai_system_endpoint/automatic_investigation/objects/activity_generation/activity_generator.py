@@ -48,8 +48,8 @@ class ActivityGenerator:
         activities = answer_raw.split("\n")
         output = []
         
-        list_regex = " *[0-9]+. +"
-        bulletpoint_regex = " *- +"
+        list_regex = "[ \t]*[0-9]+.[ \t]+"
+        bulletpoint_regex = "[ \t]*-[ \t]+"
         
         for activity in activities:
             list_search = re.search(list_regex, activity)

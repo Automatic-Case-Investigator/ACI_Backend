@@ -1,7 +1,6 @@
 from django.conf import settings
 import importlib.util
 import requests
-import json
 import re
 
 module_spec = importlib.util.spec_from_file_location(
@@ -55,21 +54,23 @@ class QueryGenerator:
                 "case_description": case_description,
                 "task_title": task_title,
                 "task_description": task_description,
-                "activity": activity
+                "activity": activity,
+                "siem" : "wazuh",                   # TODO: SIEM wrapper should be implemented and replace this hardcoded value
             }
         )
         answer_raw = response.json()["result"]
         output = []
         
         header_regex = "Information gathered from the case description:"
-        bulletpoint_regex = " *- +"
+        bulletpoint_regex = "[ \t]*-[ \t]+"
         
         header_search = re.search(header_regex, answer_raw)
         if header_search:
             return {"is_query": False, "result": answer_raw}
 
-        bulletpoint_matches = re.findall(bulletpoint_regex, activity)
-        for match in bulletpoint_matches:
-            output.append(json.loads(match))
+        bulletpoint_values = re.split(bulletpoint_regex, answer_raw)
+        for index in range(1, len(bulletpoint_values)):
+            match = bulletpoint_values[index]
+            output.append(match)
         
-        return {"result": output}
+        return {"is_query": True, "result": output}
