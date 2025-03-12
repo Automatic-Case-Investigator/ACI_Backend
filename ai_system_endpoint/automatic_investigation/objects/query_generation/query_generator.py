@@ -58,20 +58,5 @@ class QueryGenerator:
                 "siem" : "wazuh",                   # TODO: SIEM wrapper should be implemented and replace this hardcoded value
             }
         )
-        answer_raw = response.json()["result"]
-        output = []
-        
-        header_regex = "Information gathered from the case description:"
-        bulletpoint_regex = "[ \t]*-[ \t]+"
-        
-        header_search = re.search(header_regex, answer_raw)
-        if header_search or answer_raw[:2] != "- ":
-            return {"is_query": False, "result": answer_raw}
-                    
-
-        bulletpoint_values = re.split(bulletpoint_regex, answer_raw)
-        for index in range(1, len(bulletpoint_values)):
-            match = bulletpoint_values[index]
-            output.append(match)
-        
-        return {"is_query": True, "result": output}
+        answer_raw = response.json()["result"]        
+        {"result": answer_raw}

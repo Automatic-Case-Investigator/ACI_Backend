@@ -96,18 +96,9 @@ class Investigator:
                         },
                         activity=activity
                     )
-                                        
-                    # go over each query one by one
-                    if response["is_query"]:
-                        final_message = f"{activity["message"]}\n\nAutomated SIEM Investigation:\n\n"
-                        for query in response["result"]:
-                            final_message += str(query) + "\n"
-                            
-                        soar_wrapper.update_task_log(activity["id"], final_message)
                     
-                    # otherwise just write the info gathered from description
-                    else:
-                        soar_wrapper.update_task_log(activity["id"], f"{activity["message"]}\n\n{response["result"]}")
+                    final_message = f"{activity["message"]}\n\n**Automated SIEM Investigation Results:**\n\n{response["result"]}"
+                    soar_wrapper.update_task_log(activity["id"], final_message)
                     
                     
         return {"message": "Success"}
