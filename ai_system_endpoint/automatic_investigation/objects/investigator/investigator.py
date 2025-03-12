@@ -107,7 +107,7 @@ class Investigator:
                     
                     # otherwise just write the info gathered from description
                     else:
-                        soar_wrapper.update_task_log(activity["id"], response["result"])
+                        soar_wrapper.update_task_log(activity["id"], f"{activity["message"]}\n\n{response["result"]}")
                     
                     
         return {"message": "Success"}
