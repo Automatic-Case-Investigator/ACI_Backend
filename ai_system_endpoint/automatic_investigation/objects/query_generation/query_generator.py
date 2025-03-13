@@ -59,4 +59,4 @@ class QueryGenerator:
             }
         )
         answer_raw = response.json()["result"]        
-        {"result": answer_raw}
+        return {"result": answer_raw}

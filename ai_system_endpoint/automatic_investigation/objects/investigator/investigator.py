@@ -94,7 +94,7 @@ class Investigator:
                                 : settings.MAXIMUM_STRING_LENGTH
                             ],
                         },
-                        activity=activity
+                        activity=activity["message"]
                     )
                     
                     final_message = f"{activity["message"]}\n\n**Automated SIEM Investigation Results:**\n\n{response["result"]}"
