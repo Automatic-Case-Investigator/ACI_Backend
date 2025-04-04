@@ -8,6 +8,6 @@ COPY . /app
 EXPOSE 8000
 
 RUN mkdir database
+RUN python manage.py makemigrations
 
-RUN python manage.py migrate
-CMD python3 manage.py runserver 0.0.0.0:8000
+CMD python manage.py migrate && (DJANGO_SUPERUSER_USERNAME=aci_admin DJANGO_SUPERUSER_PASSWORD=password DJANGO_SUPERUSER_EMAIL=admin@example.com python manage.py createsuperuser --noinput || echo "Username already exists") && python3 manage.py runserver 0.0.0.0:8000
