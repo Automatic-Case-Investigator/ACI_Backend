@@ -1,4 +1,3 @@
-import sys
 from .thehive_wrapper import TheHiveWrapper
 
 
@@ -63,11 +62,11 @@ class SOARWrapperBuilder:
                 error_msgs = []
                 if self.protocol == None or self.protocol == "":
                     error_msgs.append("Missing protocol information")
-                if self.hostname == None or self.protocol == "":
+                if self.hostname == None or self.hostname == "":
                     error_msgs.append("Missing hostname information")
-                if self.base_dir == None or self.protocol == "":
+                if self.base_dir == None or self.base_dir == "":
                     error_msgs.append("Missing base_dir information")
-                if self.api_key == None or self.protocol == "":
+                if self.api_key == None or self.api_key == "":
                     error_msgs.append("Missing api_key information")
 
                 if len(error_msgs) != 0:
