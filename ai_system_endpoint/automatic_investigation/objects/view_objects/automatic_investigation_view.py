@@ -8,6 +8,7 @@ from rest_framework import status
 
 class AutomaticInvestigationView(APIView):
     def post(self, request, *args, **kwargs):
+        siem_id = request.POST.get("siem_id")
         soar_id = request.POST.get("soar_id")
         org_id = request.POST.get("org_id")
         case_id = request.POST.get("case_id")
@@ -41,6 +42,7 @@ class AutomaticInvestigationView(APIView):
             investigate_siem = bool(int(investigate_siem))
 
         investigator = Investigator(
+            siem_id=siem_id,
             soar_id=soar_id,
             org_id=org_id,
             case_id=case_id,
