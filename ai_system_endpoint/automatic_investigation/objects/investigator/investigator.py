@@ -126,10 +126,11 @@ class Investigator:
                         end_pos = result["end_pos"]
 
                         query_results = siem_wrapper.query(query_str=query)
-                        event_list_str = "\n".join(f"        - {event_id}" for event_id in query_results["results"])
-                        insert_text = f"\n\n    - Relevant SIEM event ids:\n\n{event_list_str}"
+                        if "results" in query_results.keys():
+                            event_list_str = "\n".join(f"        - {event_id}" for event_id in query_results["results"])
+                            insert_text = f"\n\n    - Relevant SIEM event ids:\n\n{event_list_str}"
 
-                        final_message = final_message[:end_pos] + insert_text + final_message[end_pos:]
+                            final_message = final_message[:end_pos] + insert_text + final_message[end_pos:]
 
                     # Update the task log with the enriched message
                     soar_wrapper.update_task_log(activity["id"], final_message)

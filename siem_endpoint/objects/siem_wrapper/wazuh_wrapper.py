@@ -3,6 +3,7 @@ import requests
 import base64
 import json
 import re
+import traceback
 
 
 class WazuhWrapper(SIEMWrapper):
@@ -63,6 +64,7 @@ class WazuhWrapper(SIEMWrapper):
             return WazuhWrapper.unable_to_connect_message
         
         except json.JSONDecodeError:
+            print(traceback.format_exc())
             return {"error": "Invalid query format"}
 
     def get_event(self, id: str):
