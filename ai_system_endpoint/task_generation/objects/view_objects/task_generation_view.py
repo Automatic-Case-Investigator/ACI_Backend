@@ -178,16 +178,26 @@ class TaskGenTrainerView(APIView):
     
 class RestoreView(APIView):
     def post(self, request, *args, **kwargs):
+        model_id = request.POST.get("model_id")
+        
+        if model_id is None:
+            return Response({"error": "No model specified"}, status=status.HTTP_400_BAD_REQUEST)
+        
         try:
             job_dict = job_scheduler.find_jobs(name="Model_Reset")
             for job in job_dict["jobs"]:
                 if job["status"] == "queued" or job["status"] == "running":
                     return Response({"error": "Only one resetting job is allowed to run a single time"}, status=status.HTTP_400_BAD_REQUEST)
 
+            form_data = {
+                "model_id": model_id
+            }
+            
             job_scheduler.add_job(
                 requests.post,
                 name="Model_Reset",
                 url=settings.AI_BACKEND_URL + "/task_generation_model/restore_baseline/",
+                data=form_data,
                 timeout=None
             )
 
@@ -202,5 +212,11 @@ class CurrentBackupVersionView(APIView):
             return Response(response.json(), status=status.HTTP_200_OK)
         except requests.exceptions.ConnectionError:
             return Response({"error": "Unable to connect to the AI backend. Please contact the administrator."}, status=status.HTTP_502_BAD_GATEWAY)
-        except JSONDecodeError:
-            return Response({"error": "Data not formatted properly"}, status=status.HTTP_400_BAD_REQUEST)
+
+class CurrentModelIdView(APIView):
+    def get(self, request):
+        try:
+            response = requests.get(url=settings.AI_BACKEND_URL + f"/task_generation_model/current_model_id/")
+            return Response(response.json(), status=status.HTTP_200_OK)
+        except requests.exceptions.ConnectionError:
+            return Response({"error": "Unable to connect to the AI backend. Please contact the administrator."}, status=status.HTTP_502_BAD_GATEWAY)

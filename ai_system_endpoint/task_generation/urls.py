@@ -7,6 +7,7 @@ urlpatterns = [
     path("backup/", BackupView.as_view()),
     path("rollback/", RollbackView.as_view()),
     path("current_backup_version/", CurrentBackupVersionView.as_view()),
+    path("current_model_id/", CurrentModelIdView.as_view()),
     path("case_tmp_storage/", CaseTemporaryStorageView.as_view()),
     path("train_model/", TaskGenTrainerView.as_view()),
     path("restore_baseline/", RestoreView.as_view()),
