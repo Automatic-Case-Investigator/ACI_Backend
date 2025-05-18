@@ -2,11 +2,16 @@ from ai_system_endpoint.automatic_investigation.objects.investigator.investigato
     Investigator,
 )
 from ACI_Backend.objects.job_scheduler.job_scheduler import job_scheduler
+from rest_framework_simplejwt.authentication import JWTAuthentication
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework import status
 
 class AutomaticInvestigationView(APIView):
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
+    
     def post(self, request, *args, **kwargs):
         siem_id = request.POST.get("siem_id")
         soar_id = request.POST.get("soar_id")

@@ -1,4 +1,6 @@
 from ACI_Backend.objects.job_scheduler.job_scheduler import job_scheduler
+from rest_framework_simplejwt.authentication import JWTAuthentication
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework import status
@@ -6,6 +8,9 @@ from django.conf import settings
 import requests
 
 class RestoreView(APIView):
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
+    
     def post(self, request, *args, **kwargs):
         try:
             job_dict = job_scheduler.find_jobs(name="Model_Reset")

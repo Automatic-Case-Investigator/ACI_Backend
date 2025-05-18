@@ -1,6 +1,8 @@
 from ai_system_endpoint.task_generation.objects.task_generation.task_generator import TaskGenerator
 from soar_endpoint.objects.soar_wrapper.soar_wrapper_builder import SOARWrapperBuilder
 from ACI_Backend.objects.job_scheduler.job_scheduler import job_scheduler
+from rest_framework_simplejwt.authentication import JWTAuthentication
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework import status
@@ -11,6 +13,9 @@ import requests
 import json
 
 class TaskGenerationView(APIView):
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
+    
     def post(self, request, *args, **kwargs):
         soar_id = request.POST.get("soar_id")
         case_id = request.POST.get("case_id")
@@ -46,6 +51,9 @@ class TaskGenerationView(APIView):
         return Response({"message": "Success"}, status=status.HTTP_200_OK)
 
 class CaseTemporaryStorageView(APIView):
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
+    
     def post(self, request, *args, **kwargs):
         """Modifies the already stored case data in redis
 
@@ -93,6 +101,9 @@ class CaseTemporaryStorageView(APIView):
             return Response({"error": "Data not formatted properly"}, status=status.HTTP_400_BAD_REQUEST)
 
 class BackupView(APIView):
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
+    
     def post(self, request):
         try:
             response = requests.post(url=settings.AI_BACKEND_URL + "/task_generation_model/backup/")
@@ -113,6 +124,9 @@ class BackupView(APIView):
             return Response({"error": "Data not formatted properly"}, status=status.HTTP_400_BAD_REQUEST)
 
 class RollbackView(APIView):
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
+    
     def post(self, request):
         try:
             restore_name = request.POST.get("hash")
@@ -128,6 +142,9 @@ class RollbackView(APIView):
             return Response({"error": "Data not formatted properly"}, status=status.HTTP_400_BAD_REQUEST)
 
 class HistoryView(APIView):
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
+    
     def get(self, request):
         try:
             page_number = int(request.GET.get("page"))
@@ -140,6 +157,9 @@ class HistoryView(APIView):
 
 
 class TaskGenTrainerView(APIView):
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
+    
     def post(self, request, *args, **kwargs):
         try:
             job_dict = job_scheduler.find_jobs(name="Model_Train")
@@ -177,6 +197,9 @@ class TaskGenTrainerView(APIView):
             return Response({"error": "Unable to connect to the AI backend. Please contact the administrator."}, status=status.HTTP_502_BAD_GATEWAY)
     
 class RestoreView(APIView):
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
+    
     def post(self, request, *args, **kwargs):
         model_id = request.POST.get("model_id")
         
@@ -206,6 +229,9 @@ class RestoreView(APIView):
             return Response({"error": "Unable to connect to the AI backend. Please contact the administrator."}, status=status.HTTP_502_BAD_GATEWAY)
         
 class CurrentBackupVersionView(APIView):
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
+    
     def get(self, request):
         try:
             response = requests.get(url=settings.AI_BACKEND_URL + f"/task_generation_model/current_backup_version/")
@@ -214,6 +240,9 @@ class CurrentBackupVersionView(APIView):
             return Response({"error": "Unable to connect to the AI backend. Please contact the administrator."}, status=status.HTTP_502_BAD_GATEWAY)
 
 class CurrentModelIdView(APIView):
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
+    
     def get(self, request):
         try:
             response = requests.get(url=settings.AI_BACKEND_URL + f"/task_generation_model/current_model_id/")

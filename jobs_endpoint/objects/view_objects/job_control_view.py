@@ -2,9 +2,13 @@ from ACI_Backend.objects.job_scheduler.job_scheduler import job_scheduler
 from rest_framework import status
 from rest_framework.views import APIView
 from rest_framework.response import Response
-
+from rest_framework.permissions import IsAuthenticated
+from rest_framework_simplejwt.authentication import JWTAuthentication
 
 class JobControlView(APIView):
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
+    
     def get(self, request, *args, **kwargs):
         jobs = job_scheduler.get_jobs()
         return Response(jobs, status=status.HTTP_200_OK)

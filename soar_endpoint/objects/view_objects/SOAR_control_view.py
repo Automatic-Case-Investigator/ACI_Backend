@@ -2,10 +2,15 @@ from soar_endpoint.objects.soar_wrapper.soar_wrapper_builder import SOARWrapperB
 from rest_framework import status
 from rest_framework.views import APIView
 from rest_framework.response import Response
+from rest_framework.permissions import IsAuthenticated
+from rest_framework_simplejwt.authentication import JWTAuthentication
 from soar_endpoint import models
 from django.conf import settings
 
 class OrgControlView(APIView):
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
+    
     def get(self, request, *args, **kwargs):
         soar_id = request.GET.get("soar_id")
         
@@ -32,6 +37,9 @@ class OrgControlView(APIView):
         return Response(org_data, status=status.HTTP_200_OK)
 
 class CaseControlView(APIView):
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
+    
     def get(self, request, *args, **kwargs):
         soar_id = request.GET.get("soar_id")
         case_id = request.GET.get("case_id")
@@ -78,6 +86,9 @@ class CaseControlView(APIView):
             return Response(cases_data, status=status.HTTP_200_OK)
         
 class TaskControlView(APIView):
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
+    
     def get(self, request, *args, **kwargs):
         soar_id = request.GET.get("soar_id")
         org_id = request.GET.get("org_id")
@@ -129,6 +140,9 @@ class TaskControlView(APIView):
         return Response(response, status=status.HTTP_200_OK)
     
 class TaskLogControlView(APIView):
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
+    
     def get(self, request, *args, **kwargs):
         soar_id = request.GET.get("soar_id")
         task_id = request.GET.get("task_id")
