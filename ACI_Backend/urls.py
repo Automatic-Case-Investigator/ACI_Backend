@@ -15,11 +15,13 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path("blog/", include("blog.urls"))
 """
 
-from django.urls import path, include
+from .objects.view_objects.reset_credentials_view import ResetCredentialsView
 from rest_framework_simplejwt import views as jwt_views
+from django.urls import path, include
 
 urlpatterns = [
     path("token/", jwt_views.TokenObtainPairView.as_view(), name="token_obtain_pair"),
+    path("reset_credentials/", ResetCredentialsView.as_view()),
     path("siem/", include("siem_endpoint.urls")),
     path("soar/", include("soar_endpoint.urls")),
     path("jobs/", include("jobs_endpoint.urls")),
