@@ -107,6 +107,9 @@ WSGI_APPLICATION = "ACI_Backend.wsgi.application"
 # AI backend url
 AI_BACKEND_URL = os.getenv("AI_BACKEND_URL")
 
+# Secret API key for verifying the authenticity of the main backend
+AI_BACKEND_API_KEY = os.getenv("AI_BACKEND_API_KEY")
+
 
 # Database
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases

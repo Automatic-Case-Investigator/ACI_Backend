@@ -12,8 +12,17 @@ class StatusView(APIView):
     
     def get(self, request, *args, **kwargs):
         try:
-            response = requests.get(url=settings.AI_BACKEND_URL + "test_connection/")
+            response = requests.get(
+                url=settings.AI_BACKEND_URL + "test_connection/",
+                headers={
+                    "Authorization": f"Bearer {settings.AI_BACKEND_API_KEY}"
+                }
+            )
             data = response.json()
+            
+            if response.status_code != 200:
+                return Response({"message": "Success", "connected": False}, status=status.HTTP_200_OK)
+                        
             if data["message"] == "Success":
                 return Response({"message": "Success", "connected": True}, status=status.HTTP_200_OK)
             else:

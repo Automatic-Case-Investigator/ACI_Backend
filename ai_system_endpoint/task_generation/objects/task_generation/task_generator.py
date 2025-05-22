@@ -16,7 +16,7 @@ class TaskGenerator:
 
     def set_soarwrapper(self, soarwrapper):
         self.soarwrapper = soarwrapper
-        
+
     def extract_case_title(self, case_data):
         if str(type(self.soarwrapper)) == str(thehive_wrapper.TheHiveWrapper):
             return case_data["title"]
@@ -31,16 +31,14 @@ class TaskGenerator:
 
         if title is None:
             raise TypeError("Title is not provided")
-        
+
         if description is None:
             raise TypeError("Description is not provided")
 
         response = requests.post(
             settings.AI_BACKEND_URL + "/task_generation_model/generate/",
-            data={
-                "case_title": title,
-                "case_description": description
-            }
+            headers={"Authorization": f"Bearer {settings.AI_BACKEND_API_KEY}"},
+            data={"case_title": title, "case_description": description},
         )
         answer_raw = response.json()["result"]
         tasks = answer_raw.split("\n\n")
@@ -53,20 +51,27 @@ class TaskGenerator:
             task_title_search = re.search("\nTitle:", task)
             task_description_search = re.search("\nDescription:", task)
             if task_tag_search and task_title_search and task_description_search:
-                tag = task[task_tag_search.start() : task_title_search.start()].split("\n")[0]
-                
+                tag = task[task_tag_search.start() : task_title_search.start()].split(
+                    "\n"
+                )[0]
+
                 task_formatted["Tag"] = tag
                 task_formatted["Title"] = task[
                     task_title_search.start() + 7 : task_description_search.start()
                 ].split("\n")[0]
-                task_formatted["Description"] = task[task_description_search.start() + 13 :].split("\n")[0]
-                
-                if task_formatted["Tag"] in seen_tags or task_formatted["Title"] in seen_titles:
+                task_formatted["Description"] = task[
+                    task_description_search.start() + 13 :
+                ].split("\n")[0]
+
+                if (
+                    task_formatted["Tag"] in seen_tags
+                    or task_formatted["Title"] in seen_titles
+                ):
                     continue
-                
+
                 seen_tags.append(task_formatted["Tag"])
                 seen_titles.append(task_formatted["Title"])
-                
+
                 result = self.soarwrapper.create_task_in_case(
                     case_id=case_data["id"], task_data=task_formatted
                 )
