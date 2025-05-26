@@ -13,6 +13,13 @@ class RestoreView(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request, *args, **kwargs):
+        model_id = request.POST.get("model_id")
+
+        if model_id is None:
+            return Response(
+                {"error": "No model specified"}, status=status.HTTP_400_BAD_REQUEST
+            )
+            
         try:
             job_dict = job_scheduler.find_jobs(name="Model_Reset")
             for job in job_dict["jobs"]:
@@ -23,6 +30,8 @@ class RestoreView(APIView):
                         },
                         status=status.HTTP_400_BAD_REQUEST,
                     )
+                    
+            form_data = {"model_id": model_id}
 
             job_scheduler.add_job(
                 requests.post,
@@ -30,6 +39,7 @@ class RestoreView(APIView):
                 url=settings.AI_BACKEND_URL
                 + "/activity_generation_model/restore_baseline/",
                 headers={"Authorization": f"Bearer {settings.AI_BACKEND_API_KEY}"},
+                data=form_data,
                 timeout=None,
             )
 
