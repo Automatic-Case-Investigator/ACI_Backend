@@ -43,7 +43,7 @@ opt_einsum==3.4.0
 optree==0.13.0
 packaging==24.1
 Pebble==5.1.0
-protobuf==5.28.3
+protobuf==5.29.5
 psutil==6.1.0
 Pygments==2.18.0
 PyJWT==2.9.0
