@@ -86,34 +86,6 @@ class WazuhWrapper(SIEMWrapper):
         except requests.exceptions.ConnectionError as e:
             return WazuhWrapper.unable_to_connect_message
         
-    
-    def fix_json_braces(self, json_str):
-        """Fix unbalanced braces/brackets in JSON strings."""
-        stack = []
-        quotes = False
-        fixed = list(json_str)
-        
-        for i, char in enumerate(json_str):
-            if char == '"' and (i == 0 or json_str[i-1] != '\\'):
-                quotes = not quotes
-            if quotes:
-                continue
-                
-            if char in '{[':
-                stack.append(char)
-            elif char in '}]':
-                if not stack:
-                    fixed.pop(i)
-                    continue
-                last_open = stack.pop()
-                if (char == '}' and last_open != '{') or (char == ']' and last_open != '['):
-                    fixed[i] = '}' if last_open == '{' else ']'
-        
-        while stack:
-            last_open = stack.pop()
-            fixed.append('}' if last_open == '{' else ']')
-        
-        return ''.join(fixed)
         
     def parse_queries_from_task_log(self, task_log_str: str):
         matches = re.finditer(r"^[-*•]\s*(.+)$", task_log_str, flags=re.MULTILINE)
@@ -132,7 +104,6 @@ class WazuhWrapper(SIEMWrapper):
                     "end_pos": end_pos
                 })
             except json.JSONDecodeError:
-                point = self.fix_json_braces(point)
                 try:
                     json.loads(point)
                     queries.append({
@@ -141,6 +112,7 @@ class WazuhWrapper(SIEMWrapper):
                         "end_pos": end_pos
                     })
                 except json.JSONDecodeError:
+                    print("Warning: Bulletpoint format must be JSON, ignoring bulletpoint")
                     pass
 
         return queries
