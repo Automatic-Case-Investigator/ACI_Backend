@@ -7,39 +7,49 @@ from rest_framework_simplejwt.authentication import JWTAuthentication
 from soar_endpoint import models
 from django.conf import settings
 
+
 class OrgControlView(APIView):
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated]
-    
+
     def get(self, request, *args, **kwargs):
         soar_id = request.GET.get("soar_id")
-        
+
         # if user does not provide the argument
         if soar_id is None:
-            return Response({"error": "Target SOAR id not found"}, status=status.HTTP_400_BAD_REQUEST)
-        
+            return Response(
+                {"error": "Target SOAR id not found"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
         # if corresponding SOAR data entry doesn't exist
         target_soar = models.SOARInfo.objects.get(id=soar_id)
         if target_soar is None:
-            return Response({"error": "Target SOAR id not found"}, status=status.HTTP_400_BAD_REQUEST)
-        
+            return Response(
+                {"error": "Target SOAR id not found"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
         soar_wrapper_builder = SOARWrapperBuilder()
         soar_wrapper = None
         try:
-            soar_wrapper = soar_wrapper_builder.build_from_model_object(soar_info_obj=target_soar)
+            soar_wrapper = soar_wrapper_builder.build_from_model_object(
+                soar_info_obj=target_soar
+            )
         except TypeError as e:
             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
-        
+
         org_data = soar_wrapper.get_organizations()
         if "error" in org_data.keys():
             return Response(org_data, status=status.HTTP_502_BAD_GATEWAY)
 
         return Response(org_data, status=status.HTTP_200_OK)
 
+
 class CaseControlView(APIView):
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated]
-    
+
     def get(self, request, *args, **kwargs):
         soar_id = request.GET.get("soar_id")
         case_id = request.GET.get("case_id")
@@ -49,16 +59,20 @@ class CaseControlView(APIView):
         page_number = request.GET.get("page")
 
         if soar_id is None or (case_id is None and org_id is None):
-            return Response({"error": "Required field missing"}, status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                {"error": "Required field missing"}, status=status.HTTP_400_BAD_REQUEST
+            )
 
         soar_info_obj = models.SOARInfo.objects.get(id=soar_id)
         soar_wrapper_builder = SOARWrapperBuilder()
         soar_wrapper = None
         try:
-            soar_wrapper = soar_wrapper_builder.build_from_model_object(soar_info_obj=soar_info_obj)
+            soar_wrapper = soar_wrapper_builder.build_from_model_object(
+                soar_info_obj=soar_info_obj
+            )
         except TypeError as e:
             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
-            
+
         if case_id is not None:
             case_data = soar_wrapper.get_case(case_id)
             if "error" in case_data.keys():
@@ -67,28 +81,36 @@ class CaseControlView(APIView):
             return Response(case_data, status=status.HTTP_200_OK)
         else:
             cases_data = None
-            
+
             if page_number is not None and not page_number.isdigit():
-                return Response({"error": "Invalid page number"}, status=status.HTTP_400_BAD_REQUEST)
+                return Response(
+                    {"error": "Invalid page number"}, status=status.HTTP_400_BAD_REQUEST
+                )
             elif page_number is not None:
                 page_number = int(page_number)
-                
+
             if time_sort_type is not None and not time_sort_type.isdigit():
-                return Response({"error": "Invalid time sort type"}, status=status.HTTP_400_BAD_REQUEST)
+                return Response(
+                    {"error": "Invalid time sort type"},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
             elif time_sort_type is not None:
                 time_sort_type = int(time_sort_type)
 
-            cases_data = soar_wrapper.get_cases(org_id, search_str, settings.CASE_PAGE_SIZE, time_sort_type, page_number)
-            
+            cases_data = soar_wrapper.get_cases(
+                org_id, search_str, settings.CASE_PAGE_SIZE, time_sort_type, page_number
+            )
+
             if "error" in cases_data.keys():
                 return Response(cases_data, status=status.HTTP_502_BAD_GATEWAY)
-            
+
             return Response(cases_data, status=status.HTTP_200_OK)
-        
+
+
 class TaskControlView(APIView):
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated]
-    
+
     def get(self, request, *args, **kwargs):
         soar_id = request.GET.get("soar_id")
         org_id = request.GET.get("org_id")
@@ -96,16 +118,20 @@ class TaskControlView(APIView):
         case_id = request.GET.get("case_id")
 
         if soar_id is None or (task_id is None and case_id is None):
-            return Response({"error": "Required field missing"}, status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                {"error": "Required field missing"}, status=status.HTTP_400_BAD_REQUEST
+            )
 
         soar_info_obj = models.SOARInfo.objects.get(id=soar_id)
         soar_wrapper_builder = SOARWrapperBuilder()
         soar_wrapper = None
         try:
-            soar_wrapper = soar_wrapper_builder.build_from_model_object(soar_info_obj=soar_info_obj)
+            soar_wrapper = soar_wrapper_builder.build_from_model_object(
+                soar_info_obj=soar_info_obj
+            )
         except TypeError as e:
             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
-            
+
         if task_id is not None:
             task_data = soar_wrapper.get_task(org_id, task_id)
             if "error" in task_data.keys():
@@ -118,18 +144,22 @@ class TaskControlView(APIView):
                 return Response(tasks_data, status=status.HTTP_502_BAD_GATEWAY)
 
             return Response(tasks_data, status=status.HTTP_200_OK)
-        
+
     def delete(self, request, *args, **kwargs):
         soar_id = request.data.get("soar_id")
         task_id = request.data.get("task_id")
 
         if soar_id is None or task_id is None:
-            return Response({"error": "Required field missing"}, status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                {"error": "Required field missing"}, status=status.HTTP_400_BAD_REQUEST
+            )
 
         soar_info_obj = models.SOARInfo.objects.get(id=soar_id)
         soar_wrapper_builder = SOARWrapperBuilder()
         try:
-            soar_wrapper = soar_wrapper_builder.build_from_model_object(soar_info_obj=soar_info_obj)
+            soar_wrapper = soar_wrapper_builder.build_from_model_object(
+                soar_info_obj=soar_info_obj
+            )
         except TypeError as e:
             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -138,22 +168,27 @@ class TaskControlView(APIView):
             return Response(response, status=status.HTTP_502_BAD_GATEWAY)
 
         return Response(response, status=status.HTTP_200_OK)
-    
+
+
 class TaskLogControlView(APIView):
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated]
-    
+
     def get(self, request, *args, **kwargs):
         soar_id = request.GET.get("soar_id")
         task_id = request.GET.get("task_id")
 
         if soar_id is None or task_id is None:
-            return Response({"error": "Required field missing"}, status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                {"error": "Required field missing"}, status=status.HTTP_400_BAD_REQUEST
+            )
 
         soar_info_obj = models.SOARInfo.objects.get(id=soar_id)
         soar_wrapper_builder = SOARWrapperBuilder()
         try:
-            soar_wrapper = soar_wrapper_builder.build_from_model_object(soar_info_obj=soar_info_obj)
+            soar_wrapper = soar_wrapper_builder.build_from_model_object(
+                soar_info_obj=soar_info_obj
+            )
         except TypeError as e:
             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -162,3 +197,34 @@ class TaskLogControlView(APIView):
             return Response(task_logs_data, status=status.HTTP_502_BAD_GATEWAY)
 
         return Response(task_logs_data, status=status.HTTP_200_OK)
+
+    def post(self, request, *args, **kwargs):
+        soar_id = request.data.get("soar_id")
+        task_id = request.data.get("task_id")
+        task_log_id = request.data.get("task_log_id")
+        log_data = request.data.get("task_log_data")
+
+        if soar_id is None or task_id is None or log_data is None:
+            return Response(
+                {"error": "Required field missing"}, status=status.HTTP_400_BAD_REQUEST
+            )
+
+        soar_info_obj = models.SOARInfo.objects.get(id=soar_id)
+        soar_wrapper_builder = SOARWrapperBuilder()
+        try:
+            soar_wrapper = soar_wrapper_builder.build_from_model_object(
+                soar_info_obj=soar_info_obj
+            )
+        except TypeError as e:
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+        if task_log_id is None:
+            response = soar_wrapper.create_task_log(log_data)
+            if "error" in response.keys():
+                return Response(response, status=status.HTTP_502_BAD_GATEWAY)
+            return Response(response, status=status.HTTP_200_OK)
+        else:
+            response = soar_wrapper.update_task_log(task_log_id, log_data)
+            if "error" in response.keys():
+                return Response(response, status=status.HTTP_502_BAD_GATEWAY)
+            return Response(response, status=status.HTTP_200_OK)

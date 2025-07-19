@@ -7,10 +7,6 @@ import traceback
 
 
 class WazuhWrapper(SIEMWrapper):
-    unable_to_connect_message = {
-        "error": "Unable to connect to the SIEM platform. Please make sure you have the correct connection settings."
-    }
-    
     def __init__(
         self,
         protocol: str,
@@ -35,7 +31,7 @@ class WazuhWrapper(SIEMWrapper):
         if use_api_key or (username == "" and password == ""):
             print("Wazuh accepts only username and password authentication")
 
-    def query(self, query_str: str):
+    def query(self, query_str: str, output_full: bool = False):
         try:
             query = json.loads(query_str)
             url = f"{self.protocol}//{self.hostname}{self.base_dir}wazuh-alerts-*/_search?pretty"
@@ -50,6 +46,9 @@ class WazuhWrapper(SIEMWrapper):
             response_json = response.json()
             print(f"Query: {query_str}\nResponse: {response_json}")
             hits = response_json["hits"]["hits"]
+
+            if output_full:
+                return {"results": hits}
 
             output = []
             for hit in hits:

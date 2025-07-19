@@ -14,7 +14,7 @@ services:
     networks:
       - backend_net
 
-  aci-backend:
+  aci_backend:
     build:
       context: .
       dockerfile: Dockerfile

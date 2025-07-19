@@ -10,6 +10,9 @@ class SIEMWrapper:
         username: str,
         password: str,
     ):
+        self.unable_to_connect_message = {
+            "error": "Unable to connect to the SIEM platform. Please make sure you have the correct connection settings."
+        }
         self.protocol = protocol
         self.name = name
         self.hostname = hostname
@@ -19,5 +22,5 @@ class SIEMWrapper:
         self.username = username
         self.password = password
 
-    def query(self, query_str):
+    def query(self, query_str, output_full):
         print("To be implemented")
