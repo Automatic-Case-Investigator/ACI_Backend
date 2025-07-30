@@ -1,6 +1,6 @@
 # ACI Backend
 
-This is the main local backend designed to interface with the AI server and integrate with SIEM and SOAR platforms to coordinate investigations.
+This is the main local backend designed to interface with the [AI server](https://github.com/Automatic-Case-Investigator/ACI_AI_Backend) and integrate with SIEM and SOAR platforms to coordinate investigations.
 
 ## Supported Platforms
 
