@@ -69,7 +69,7 @@ class WazuhWrapper(SIEMWrapper):
     def get_event(self, id: str):
         try:
             query = {"query": {"match": {"_id": id}}}
-            url = f"{self.protocol}://{self.hostname}{self.base_dir}wazuh-alerts-*/_search?pretty"
+            url = f"{self.protocol}//{self.hostname}{self.base_dir}wazuh-alerts-*/_search?pretty"
             credentials = base64.b64encode(
                 f"{self.username}:{self.password}".encode()
             ).decode("utf-8")
@@ -92,8 +92,8 @@ class WazuhWrapper(SIEMWrapper):
 
         for match in matches:
             point = match.group(1)
-            start_pos = match.start(1)  # start index of the actual point (without bullet)
-            end_pos = match.end(1)      # end index of the actual point
+            start_pos = match.start(1)
+            end_pos = match.end(1)
 
             try:
                 json.loads(point)

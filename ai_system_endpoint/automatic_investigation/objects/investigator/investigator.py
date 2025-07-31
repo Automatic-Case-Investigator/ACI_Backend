@@ -4,12 +4,22 @@ from ai_system_endpoint.automatic_investigation.objects.activity_generation.acti
 from ai_system_endpoint.automatic_investigation.objects.query_generation.query_generator import (
     QueryGenerator,
 )
+from ai_system_endpoint.automatic_investigation.objects.anomaly_detector.anomaly_detector import AnomalyDetector
 from soar_endpoint.objects.soar_wrapper.soar_wrapper_builder import SOARWrapperBuilder
 from siem_endpoint.objects.siem_wrapper.siem_wrapper_builder import SIEMWrapperBuilder
 from soar_endpoint import models as soar_models
 from siem_endpoint import models as siem_models
 from django.conf import settings
+import json
 
+def sort_nested_dict(d):
+    if not isinstance(d, dict):
+        return d
+    sorted_items = sorted(d.items())
+    sorted_dict = {}
+    for k, v in sorted_items:
+        sorted_dict[k] = sort_nested_dict(v)
+    return sorted_dict
 
 class Investigator:
     def __init__(
@@ -29,6 +39,8 @@ class Investigator:
         self.investigate_siem = investigate_siem
 
     def investigate(self):
+        """Investigate the SIEM and SOAR platforms based on the provided parameters."""
+        
         if not self.generate_activities and not self.investigate_siem:
             return {"message": "Success"}
 
@@ -56,7 +68,6 @@ class Investigator:
         case_data = None
         case_title = ""
         case_description = ""
-        task_data = None
 
         if self.generate_activities or self.investigate_siem:
             case_data = soar_wrapper.get_case(self.case_id)
@@ -85,13 +96,6 @@ class Investigator:
                     soar_wrapper.create_task_log(task["id"], activity)
 
         if self.investigate_siem:
-            # TODO: complete the siem investigation control flow
-            # read in tasks and get activities of each task
-            # generate search list:
-            # first iteration: using case title & activity -> search list
-            # futher iterations: full log & activity -> search list
-            # go over each search result, identify whether we are interested
-            # If interested, add the log to the activity log. repeat the process several times
 
             for task in tasks_data["tasks"]:
                 task_log_result = soar_wrapper.get_task_logs(task["id"])
@@ -118,19 +122,31 @@ class Investigator:
                     # Parse queries from the message
                     query_search_results = siem_wrapper.parse_queries_from_task_log(task_log_str=final_message)
                     
-                    print("Query search results: ", query_search_results)
-
                     # Insert SIEM query results at appropriate positions
                     for result in reversed(query_search_results):
                         query = result["query"]
                         end_pos = result["end_pos"]
 
                         query_results = siem_wrapper.query(query_str=query)
-                        if "results" in query_results.keys():
-                            event_list_str = "\n".join(f"        - {event_id}" for event_id in query_results["results"])
-                            insert_text = f"\n\n    - Relevant SIEM event ids:\n\n{event_list_str}"
+                        if "results" not in query_results.keys():
+                            continue
 
-                            final_message = final_message[:end_pos] + insert_text + final_message[end_pos:]
+                        insert_text = f"\n\n    - Relevant SIEM event ids for query `{query}`:\n\n"
+                        insert_text += "| Event ID | Anomaly Detection Results | Event Data |\n"
+                        insert_text += "|----------|------------|---------------|\n"
+                        
+                        detector = AnomalyDetector()
+                        
+                        for event_id in query_results["results"]:
+                            event_data = siem_wrapper.get_event(event_id)["result"]
+                            event_data = sort_nested_dict(event_data)
+                            event_data_str = json.dumps(event_data)
+                            predict_result = detector.query(event_data_str, siem_info_obj.siem_type)["result"]
+                            event_data_str = event_data_str.replace("|", "\\|")
+                            event_classification = "Likely anomalous" if predict_result > 0.5 else "Likely benign"
+                            insert_text += f"| `{event_id}` | `{event_classification}` | `{event_data_str}` |\n"
+
+                        final_message = final_message[:end_pos] + insert_text + final_message[end_pos:]
 
                     # Update the task log with the enriched message
                     soar_wrapper.update_task_log(activity["id"], final_message)
