@@ -12,15 +12,6 @@ from siem_endpoint import models as siem_models
 from django.conf import settings
 import json
 
-def sort_nested_dict(d):
-    if not isinstance(d, dict):
-        return d
-    sorted_items = sorted(d.items())
-    sorted_dict = {}
-    for k, v in sorted_items:
-        sorted_dict[k] = sort_nested_dict(v)
-    return sorted_dict
-
 class Investigator:
     def __init__(
         self,
@@ -131,20 +122,20 @@ class Investigator:
                         if "results" not in query_results.keys():
                             continue
 
-                        insert_text = f"\n\n    - Relevant SIEM event ids for query `{query}`:\n\n"
-                        insert_text += "| Event ID | Anomaly Detection Results | Event Data |\n"
+                        insert_text = f"\n\n*Note: anomaly score percentage indicates the confidence of identifying an event as anomalous.*\n\n"
+                        insert_text += "| Event ID | Anomaly Score (%) | Event Data |\n"
                         insert_text += "|----------|------------|---------------|\n"
                         
                         detector = AnomalyDetector()
                         
                         for event_id in query_results["results"]:
                             event_data = siem_wrapper.get_event(event_id)["result"]
-                            event_data = sort_nested_dict(event_data)
                             event_data_str = json.dumps(event_data)
                             predict_result = detector.query(event_data_str, siem_info_obj.siem_type)["result"]
                             event_data_str = event_data_str.replace("|", "\\|")
                             event_classification = "Likely anomalous" if predict_result > 0.5 else "Likely benign"
-                            insert_text += f"| `{event_id}` | `{event_classification}` | `{event_data_str}` |\n"
+                            anomaly_detection_output_str = f"{int(predict_result * 100)} ({event_classification})"
+                            insert_text += f"| `{event_id}` | `{anomaly_detection_output_str}` | `{event_data_str}` |\n"
 
                         final_message = final_message[:end_pos] + insert_text + final_message[end_pos:]
 
