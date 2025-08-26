@@ -42,10 +42,11 @@ class WazuhWrapper(SIEMWrapper):
                 "Authorization": "Basic " + credentials,
                 "Content-Type": "application/json",
             }
-            response = requests.post(url, headers=headers, json=query, verify=False)
-            response_json = response.json()
-            print(f"Query: {query_str}\nResponse: {response_json}")
-            hits = response_json["hits"]["hits"]
+            response = requests.post(url, headers=headers, json=query, verify=False).json()
+            
+            hits = []
+            if "hits" in response:
+                hits = response["hits"]["hits"]
 
             if output_full:
                 return {"results": hits}
@@ -77,8 +78,11 @@ class WazuhWrapper(SIEMWrapper):
                 "Authorization": "Basic " + credentials,
                 "Content-Type": "application/json",
             }
-            response = requests.post(url, headers=headers, json=query, verify=False)
-            hits = response.json()["hits"]["hits"]
+            response = requests.post(url, headers=headers, json=query, verify=False).json()
+            
+            hits = []
+            if "hits" in response:
+                hits = response["hits"]["hits"]
 
             return {"result": hits[0]}
 
