@@ -6,6 +6,7 @@ urlpatterns = [
     path("soar_info/", SOARInfoView.as_view()),
     path("organizations/", OrgControlView.as_view()),
     path("case/", CaseControlView.as_view()),
+    path("observables/", ObservableControlView.as_view()),
     path("task/", TaskControlView.as_view()),
     path("task_log/", TaskLogControlView.as_view())
 ]

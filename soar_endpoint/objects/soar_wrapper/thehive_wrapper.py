@@ -6,7 +6,7 @@ class TheHiveWrapper(SOARWrapper):
     unable_to_connect_message = {
         "error": "Unable to connect to the SOAR platform. Please make sure you have the correct connection settings."
     }
-    success_message = {"message" : "Success"}
+    success_message = {"message": "Success"}
 
     def __init__(self, protocol, name, hostname, base_dir, api_key):
         SOARWrapper.__init__(
@@ -156,12 +156,121 @@ class TheHiveWrapper(SOARWrapper):
             return {
                 "error": "The SOAR URL provided does not provide a valid data format. Please make sure that the soar is running on the URL."
             }
+        
+    def get_observable(self, org_id, observable_id):
+        try:
+            url = f"{self.protocol}//{self.hostname}{self.base_dir}api/v1/query"
+
+            query = {
+                "query": [
+                    {"_name": "getObservable", "idOrName": observable_id}
+                ]
+            }
+
+            response = None
+            if org_id is None:
+                response = requests.post(
+                    url,
+                    headers={
+                        "Content-Type": "application/json",
+                        "Authorization": f"Bearer {self.api_key}",
+                    },
+                    json=query,
+                )
+            else:
+                response = requests.post(
+                    url,
+                    headers={
+                        "Content-Type": "application/json",
+                        "Authorization": f"Bearer {self.api_key}",
+                        "X-Organisation": f"{org_id}",
+                    },
+                    json=query,
+                )
+
+            output = []
+            for task in response.json():
+                formatted = self.format_response(task)
+                output.append(formatted)
+
+            return {"observable": output}
+        except requests.exceptions.ConnectionError:
+            return TheHiveWrapper.unable_to_connect_message
+
+        except requests.exceptions.JSONDecodeError:
+            return {
+                "error": "The SOAR URL provided does not provide a valid data format. Please make sure that the soar is running on the URL."
+            }
+
+    def get_observables(self, org_id, case_id):
+        try:
+            url = f"{self.protocol}//{self.hostname}{self.base_dir}api/v1/query"
+
+            query = {
+                "query": [
+                    {"_name": "getCase", "idOrName": case_id},
+                    {"_name": "observables"},
+                ]
+            }
+
+            response = None
+            if org_id is None:
+                response = requests.post(
+                    url,
+                    headers={
+                        "Content-Type": "application/json",
+                        "Authorization": f"Bearer {self.api_key}",
+                    },
+                    json=query,
+                )
+            else:
+                response = requests.post(
+                    url,
+                    headers={
+                        "Content-Type": "application/json",
+                        "Authorization": f"Bearer {self.api_key}",
+                        "X-Organisation": f"{org_id}",
+                    },
+                    json=query,
+                )
+
+            output = []
+            for task in response.json():
+                formatted = self.format_response(task)
+                output.append(formatted)
+
+            return {"observables": output}
+        except requests.exceptions.ConnectionError:
+            return TheHiveWrapper.unable_to_connect_message
+
+        except requests.exceptions.JSONDecodeError:
+            return {
+                "error": "The SOAR URL provided does not provide a valid data format. Please make sure that the soar is running on the URL."
+            }
+            
+    def delete_observable(self, observable_id):
+        try:
+            url = f"{self.protocol}//{self.hostname}{self.base_dir}api/v1/observable/{observable_id}"
+            
+            requests.delete(
+                url,
+                headers={
+                    "Content-Type": "application/json",
+                    "Authorization": f"Bearer {self.api_key}",
+                },
+            )
+            return TheHiveWrapper.success_message
+        except requests.exceptions.ConnectionError:
+            return TheHiveWrapper.unable_to_connect_message
+
+        except requests.exceptions.JSONDecodeError:
+            return {
+                "error": "The SOAR URL provided does not provide a valid data format. Please make sure that the soar is running on the URL."
+            }
 
     def get_task(self, org_id, task_id):
         try:
-            url = (
-                f"{self.protocol}//{self.hostname}{self.base_dir}api/v1/task/{task_id}"
-            )
+            url = f"{self.protocol}//{self.hostname}{self.base_dir}api/v1/task/{task_id}"
 
             response = None
             if org_id is None:
@@ -193,9 +302,8 @@ class TheHiveWrapper(SOARWrapper):
 
     def delete_task(self, task_id):
         try:
-            url = (
-                f"{self.protocol}//{self.hostname}{self.base_dir}api/v1/task/{task_id}"
-            )
+            url = f"{self.protocol}//{self.hostname}{self.base_dir}api/v1/task/{task_id}"
+
             requests.delete(
                 url,
                 headers={

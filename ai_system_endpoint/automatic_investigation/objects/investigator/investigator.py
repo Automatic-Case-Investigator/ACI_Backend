@@ -106,6 +106,7 @@ class Investigator:
                     # Insert SIEM query results at appropriate positions
                     for result in reversed(query_search_results):
                         query = result["query"]
+                        start_pos = result["start_pos"]
                         end_pos = result["end_pos"]
 
                         query_results = siem_wrapper.query(query_str=query)
@@ -135,7 +136,7 @@ class Investigator:
                             correlation_output_str = f"{int(predict_result * 100)} ({event_classification})"
                             insert_text += f"| `{event_id}` | `{correlation_output_str}` | `{event_data_str}` |\n"
 
-                        final_message = final_message[:end_pos] + insert_text + final_message[end_pos:]
+                        final_message = f"{final_message[:start_pos]}`{final_message[start_pos:end_pos]}`{insert_text}{final_message[end_pos:]}"
 
                     # Update the task log with the enriched message
                     soar_wrapper.update_task_log(activity["id"], final_message)
