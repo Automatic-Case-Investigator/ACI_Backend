@@ -25,7 +25,7 @@ class TaskGenerator:
         if str(type(self.soarwrapper)) == str(thehive_wrapper.TheHiveWrapper):
             return case_data["description"]
 
-    def generate_task(self, case_data) -> dict:
+    def generate_task(self, case_data, web_search_enabled=False) -> dict:
         title = self.extract_case_title(case_data)
         description = self.extract_case_description(case_data)
 
@@ -38,7 +38,7 @@ class TaskGenerator:
         response = requests.post(
             settings.AI_BACKEND_URL + "/task_generation_model/generate/",
             headers={"Authorization": f"Bearer {settings.AI_BACKEND_API_KEY}"},
-            data={"case_title": title, "case_description": description},
+            data={"case_title": title, "case_description": description, "web_search": "1" if web_search_enabled else "0"},
         )
         answer_raw = response.json()["result"]
         tasks = answer_raw.split("\n\n")

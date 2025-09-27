@@ -22,11 +22,22 @@ class TaskGenerationView(APIView):
     def post(self, request, *args, **kwargs):
         soar_id = request.POST.get("soar_id")
         case_id = request.POST.get("case_id")
+        web_search_enabled = request.POST.get("web_search")
 
         if soar_id is None or case_id is None:
             return Response(
                 {"error": "Required field missing"}, status=status.HTTP_400_BAD_REQUEST
             )
+            
+        if web_search_enabled is None:
+            web_search_enabled = False
+        elif not web_search_enabled.isdigit():
+            return Response(
+                {"error": 'Parameter "web_search" not formatted properly'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        else:
+            web_search_enabled = bool(int(web_search_enabled))
 
         soar_info_obj = models.SOARInfo.objects.get(id=soar_id)
         soar_wrapper_builder = SOARWrapperBuilder()
@@ -55,6 +66,7 @@ class TaskGenerationView(APIView):
                 task_generator.generate_task,
                 name="Task_Generation",
                 case_data=case_data,
+                web_search_enabled=web_search_enabled
             )
         except TypeError as e:
             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
