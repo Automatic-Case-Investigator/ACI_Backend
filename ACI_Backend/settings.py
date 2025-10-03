@@ -114,16 +114,23 @@ AI_BACKEND_API_KEY = os.getenv("AI_BACKEND_API_KEY")
 # Database
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
 
+POSTGRES_PASSWORD = os.getenv("POSTGRES_PASSWORD")
+
 DATABASES = {
     "default": {
-        "ENGINE": "django.db.backends.sqlite3",
-        "NAME": BASE_DIR / "database/db.sqlite3",
+        "ENGINE": "django.db.backends.postgresql_psycopg2",
+        "NAME": "db",
+        "USER": "postgres",
+        "PASSWORD": "POSTGRES_PASSWORD",
+        "HOST": "localhost",
+        "PORT": 5432,
     }
 }
 
 # Job queue settings
 REDIS_HOST = os.getenv("REDIS_HOST")
 REDIS_PORT = os.getenv("REDIS_PORT")
+REDIS_PASSWORD = os.getenv("REDIS_PASSWORD")
 REDIS_DB = 0
 MAX_WORKERS = 5
 

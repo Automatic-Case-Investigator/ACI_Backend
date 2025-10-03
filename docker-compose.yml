@@ -8,10 +8,22 @@ services:
       interval: 1s
       timeout: 3s
       retries: 5
-    command: ["redis-server"]
+    command: ["redis-server", "--requirepass", "${REDIS_PASSWORD}"]
     network_mode: "host"
-    # ports:
-    #   - 6379:6379
+
+  db:
+    image: postgres
+    restart: always
+    shm_size: 128mb
+    network_mode: "host"
+    environment:
+      POSTGRES_DB: db
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    ports:
+      - ${POSTGRES_PORT}:${POSTGRES_PORT}
+    volumes:
+      - db_volume:/database
 
   aci_backend:
     build:
@@ -20,11 +32,10 @@ services:
     network_mode: "host"
     volumes:
       - db_volume:/app/database
-    # ports:
-    #   - 8000:8000
     env_file:
       - .env
     depends_on:
+      - db
       - redis
 
 volumes:
