@@ -24,7 +24,18 @@ class QueryGenerator:
         if str(type(self.soarwrapper)) == str(wrapper.TheHiveWrapper):
             return task_data["description"]
 
-    def generate_query(self, case_title, case_description, task_data, activity) -> dict:
+    def generate_query_from_prompt(self, prompt: str) -> dict:
+        response = requests.post(
+            settings.AI_BACKEND_URL + "/query_generation_model/generate/",
+            headers={"Authorization": f"Bearer {settings.AI_BACKEND_API_KEY}"},
+            data={
+                "prompt": prompt,
+                "siem": "wazuh",  # TODO: SIEM wrapper should be implemented and replace this hardcoded value
+            },
+        )
+        return response.json()
+
+    def generate_query_from_case(self, case_title, case_description, task_data, activity) -> dict:
         if case_title is None:
             raise TypeError("Case title is not provided")
 
@@ -58,5 +69,4 @@ class QueryGenerator:
                 "siem": "wazuh",  # TODO: SIEM wrapper should be implemented and replace this hardcoded value
             },
         )
-        answer_raw = response.json()["result"]
-        return {"result": answer_raw}
+        return response.json()

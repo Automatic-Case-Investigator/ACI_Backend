@@ -87,7 +87,7 @@ class Investigator:
                     # Create and run query generator
                     query_generator = QueryGenerator()
                     query_generator.set_soarwrapper(soarwrapper=soar_wrapper)
-                    response = query_generator.generate_query(
+                    response = query_generator.generate_query_from_case(
                         case_title=case_title,
                         case_description=case_description,
                         task_data={

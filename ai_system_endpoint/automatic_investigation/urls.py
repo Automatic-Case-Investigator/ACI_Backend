@@ -19,5 +19,6 @@ urlpatterns = [
     path("activity_generation_model/restore_baseline/", ActivityGenerationView.RestoreView.as_view()),
     
     # TODO: Paths for SIEM investigation
+    path("query_generation_model/generate/", QueryGenerationView.QueryGenerationView.as_view()),
     path("query_generation_model/restore_baseline/", QueryGenerationView.RestoreView.as_view()),
 ]
