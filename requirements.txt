@@ -14,7 +14,7 @@ django-environ==0.12.0
 django-rest-swagger==2.2.0
 djangorestframework==3.16.0
 djangorestframework_simplejwt==5.5.1
-filelock==3.18.0
+filelock==3.20.3
 Flask==3.0.3
 flatbuffers==24.3.25
 fsspec==2024.10.0
