@@ -43,7 +43,7 @@ opt_einsum==3.4.0
 optree==0.13.0
 packaging==24.1
 Pebble==5.1.0
-protobuf==5.29.5
+protobuf==5.29.6
 psutil==6.1.0
 psycopg2==2.9.10
 Pygments==2.18.0
