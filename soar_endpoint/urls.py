@@ -8,5 +8,6 @@ urlpatterns = [
     path("case/", CaseControlView.as_view()),
     path("observables/", ObservableControlView.as_view()),
     path("task/", TaskControlView.as_view()),
-    path("task_log/", TaskLogControlView.as_view())
+    path("task_log/", TaskLogControlView.as_view()),
+    path("document/", DocumentControlView.as_view()),
 ]

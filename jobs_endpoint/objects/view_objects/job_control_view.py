@@ -18,6 +18,7 @@ class JobControlView(APIView):
         if job_id is None:
             return Response({"error": "Required field missing"}, status=status.HTTP_400_BAD_REQUEST)
         
+        print("attempting to delete job:", job_id)
         success = job_scheduler.remove_job(job_id)
         if success:
             return Response({"message": "Success"}, status=status.HTTP_200_OK)

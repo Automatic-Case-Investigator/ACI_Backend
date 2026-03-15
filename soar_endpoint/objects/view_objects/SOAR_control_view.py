@@ -290,3 +290,37 @@ class TaskLogControlView(APIView):
             if "error" in response.keys():
                 return Response(response, status=status.HTTP_502_BAD_GATEWAY)
             return Response(response, status=status.HTTP_200_OK)
+
+class DocumentControlView(APIView):
+    def get(self, request, *args, **kwargs):
+        soar_id = request.GET.get("soar_id")
+        org_id = request.GET.get("org_id")
+        case_id = request.GET.get("case_id")
+        document_id = request.GET.get("document_id")
+                
+        if soar_id is None or org_id is None or case_id is None:
+            return Response(
+                {"error": "Required field missing"}, status=status.HTTP_400_BAD_REQUEST
+            )
+            
+        soar_info_obj = models.SOARInfo.objects.get(id=soar_id)
+        soar_wrapper_builder = SOARWrapperBuilder()
+        try:
+            soar_wrapper = soar_wrapper_builder.build_from_model_object(
+                soar_info_obj=soar_info_obj
+            )
+        except TypeError as e:
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        
+        response = dict()
+        if document_id is None:
+            response = soar_wrapper.get_pages(org_id=org_id, case_id=case_id)
+        else:
+            response = soar_wrapper.get_page(page_id=document_id)
+            
+        if "error" in response:
+            return Response(response, status=status.HTTP_502_BAD_GATEWAY)
+        
+        return Response(response, status=status.HTTP_200_OK)
+        
+        

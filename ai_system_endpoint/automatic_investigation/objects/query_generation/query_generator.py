@@ -24,6 +24,17 @@ class QueryGenerator:
         if str(type(self.soarwrapper)) == str(wrapper.TheHiveWrapper):
             return task_data["description"]
 
+    def fix_queries(self, input_str: str) -> dict:
+        response = requests.post(
+            settings.AI_BACKEND_URL + "/query_generation_model/fix_queries/",
+            headers={"Authorization": f"Bearer {settings.AI_BACKEND_API_KEY}"},
+            data={
+                "input_str": input_str,
+                "siem": "wazuh",  # TODO: SIEM wrapper should be implemented and replace this hardcoded value
+            },
+        )
+        return response.json()
+
     def generate_query_from_prompt(self, prompt: str) -> dict:
         response = requests.post(
             settings.AI_BACKEND_URL + "/query_generation_model/generate/",
@@ -35,7 +46,15 @@ class QueryGenerator:
         )
         return response.json()
 
-    def generate_query_from_case(self, case_title, case_description, task_data, activity) -> dict:
+    def generate_query_from_case(
+        self,
+        case_title: str,
+        case_description: str,
+        task_data: dict,
+        activity: str,
+        field_map: dict,
+        prev_activity_critique: str
+    ) -> dict:
         if case_title is None:
             raise TypeError("Case title is not provided")
 
@@ -57,16 +76,28 @@ class QueryGenerator:
         if activity is None:
             raise TypeError("Activity data is not provided")
 
+        request_data = {
+            "case_title": case_title,
+            "case_description": case_description,
+            "task_title": task_title,
+            "task_description": task_description,
+            "activity": activity,
+            "siem": "wazuh",  # TODO: SIEM wrapper should be implemented and replace this hardcoded value
+        }
+
+        if prev_activity_critique is not None:
+            request_data["prev_activity_critique"] = prev_activity_critique
+            
+        if field_map is not None:
+            field_data = ""
+            for field in field_map:
+                field_data += f"{field}: {field_map[field]}\n"
+                
+            request_data["fields"] = field_data
+
         response = requests.post(
             settings.AI_BACKEND_URL + "/query_generation_model/generate/",
             headers={"Authorization": f"Bearer {settings.AI_BACKEND_API_KEY}"},
-            data={
-                "case_title": case_title,
-                "case_description": case_description,
-                "task_title": task_title,
-                "task_description": task_description,
-                "activity": activity,
-                "siem": "wazuh",  # TODO: SIEM wrapper should be implemented and replace this hardcoded value
-            },
+            data=request_data,
         )
         return response.json()

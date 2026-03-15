@@ -29,7 +29,7 @@ class Job:
 
 
 class JobScheduler:
-    def __init__(self, max_workers: int = 5):
+    def __init__(self, max_workers: int = 10):
         self.executor = ThreadPool(max_workers=max_workers)
         self.jobs = {}
         self.lock = Lock()

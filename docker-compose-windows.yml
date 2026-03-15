@@ -37,7 +37,7 @@ services:
     volumes:
       - db_volume:/app/database
     networks:
-      - backend_net
+      - backend_net    
     env_file:
       - .env
     depends_on:

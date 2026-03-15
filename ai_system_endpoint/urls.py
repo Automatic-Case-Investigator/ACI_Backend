@@ -4,5 +4,6 @@ from django.urls import path, include
 urlpatterns = [
     path("status/", StatusView.as_view()),
     path("task_generation_model/", include("ai_system_endpoint.task_generation.urls")),
+    path("activity_generation_model/", include("ai_system_endpoint.activity_generation.urls")),
     path("automatic_investigation/", include("ai_system_endpoint.automatic_investigation.urls")),
 ]

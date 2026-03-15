@@ -3,9 +3,7 @@ import requests
 
 
 class TheHiveWrapper(SOARWrapper):
-    unable_to_connect_message = {
-        "error": "Unable to connect to the SOAR platform. Please make sure you have the correct connection settings."
-    }
+    unable_to_connect_message = {"error": "Unable to connect to the SOAR platform. Please make sure you have the correct connection settings."}
     success_message = {"message": "Success"}
 
     def __init__(self, protocol, name, hostname, base_dir, api_key):
@@ -55,15 +53,11 @@ class TheHiveWrapper(SOARWrapper):
             return TheHiveWrapper.unable_to_connect_message
 
         except requests.exceptions.JSONDecodeError:
-            return {
-                "error": "The SOAR URL provided does not provide a valid data format. Please make sure that the soar is running on the URL."
-            }
+            return {"error": "The SOAR URL provided does not provide a valid data format. Please make sure that the soar is running on the URL."}
 
     def get_case(self, case_id):
         try:
-            url = (
-                f"{self.protocol}//{self.hostname}{self.base_dir}api/v1/case/{case_id}"
-            )
+            url = f"{self.protocol}//{self.hostname}{self.base_dir}api/v1/case/{case_id}"
             response = requests.get(
                 url,
                 headers={
@@ -77,9 +71,7 @@ class TheHiveWrapper(SOARWrapper):
             return TheHiveWrapper.unable_to_connect_message
 
         except requests.exceptions.JSONDecodeError:
-            return {
-                "error": "The SOAR URL provided does not provide a valid data format. Please make sure that the soar is running on the URL."
-            }
+            return {"error": "The SOAR URL provided does not provide a valid data format. Please make sure that the soar is running on the URL."}
 
     def get_cases(
         self,
@@ -90,14 +82,8 @@ class TheHiveWrapper(SOARWrapper):
         page_number: int,
     ):
         query_update_funcs = {
-            0: lambda query: query["query"].append(
-                {"_name": "sort", "_fields": [{"_createdAt": "desc"}]}
-            )
-            or query,
-            1: lambda query: query["query"].append(
-                {"_name": "sort", "_fields": [{"_createdAt": "asc"}]}
-            )
-            or query,
+            0: lambda query: query["query"].append({"_name": "sort", "_fields": [{"_createdAt": "desc"}]}) or query,
+            1: lambda query: query["query"].append({"_name": "sort", "_fields": [{"_createdAt": "asc"}]}) or query,
         }
         try:
             url = f"{self.protocol}//{self.hostname}{self.base_dir}api/v1/query"
@@ -153,19 +139,13 @@ class TheHiveWrapper(SOARWrapper):
             return TheHiveWrapper.unable_to_connect_message
 
         except requests.exceptions.JSONDecodeError:
-            return {
-                "error": "The SOAR URL provided does not provide a valid data format. Please make sure that the soar is running on the URL."
-            }
-        
+            return {"error": "The SOAR URL provided does not provide a valid data format. Please make sure that the soar is running on the URL."}
+
     def get_observable(self, org_id, observable_id):
         try:
             url = f"{self.protocol}//{self.hostname}{self.base_dir}api/v1/query"
 
-            query = {
-                "query": [
-                    {"_name": "getObservable", "idOrName": observable_id}
-                ]
-            }
+            query = {"query": [{"_name": "getObservable", "idOrName": observable_id}]}
 
             response = None
             if org_id is None:
@@ -198,9 +178,7 @@ class TheHiveWrapper(SOARWrapper):
             return TheHiveWrapper.unable_to_connect_message
 
         except requests.exceptions.JSONDecodeError:
-            return {
-                "error": "The SOAR URL provided does not provide a valid data format. Please make sure that the soar is running on the URL."
-            }
+            return {"error": "The SOAR URL provided does not provide a valid data format. Please make sure that the soar is running on the URL."}
 
     def get_observables(self, org_id, case_id):
         try:
@@ -244,14 +222,12 @@ class TheHiveWrapper(SOARWrapper):
             return TheHiveWrapper.unable_to_connect_message
 
         except requests.exceptions.JSONDecodeError:
-            return {
-                "error": "The SOAR URL provided does not provide a valid data format. Please make sure that the soar is running on the URL."
-            }
-            
+            return {"error": "The SOAR URL provided does not provide a valid data format. Please make sure that the soar is running on the URL."}
+
     def delete_observable(self, observable_id):
         try:
             url = f"{self.protocol}//{self.hostname}{self.base_dir}api/v1/observable/{observable_id}"
-            
+
             requests.delete(
                 url,
                 headers={
@@ -264,9 +240,7 @@ class TheHiveWrapper(SOARWrapper):
             return TheHiveWrapper.unable_to_connect_message
 
         except requests.exceptions.JSONDecodeError:
-            return {
-                "error": "The SOAR URL provided does not provide a valid data format. Please make sure that the soar is running on the URL."
-            }
+            return {"error": "The SOAR URL provided does not provide a valid data format. Please make sure that the soar is running on the URL."}
 
     def get_task(self, org_id, task_id):
         try:
@@ -296,9 +270,7 @@ class TheHiveWrapper(SOARWrapper):
             return TheHiveWrapper.unable_to_connect_message
 
         except requests.exceptions.JSONDecodeError:
-            return {
-                "error": "The SOAR URL provided does not provide a valid data format. Please make sure that the soar is running on the URL."
-            }
+            return {"error": "The SOAR URL provided does not provide a valid data format. Please make sure that the soar is running on the URL."}
 
     def delete_task(self, task_id):
         try:
@@ -316,9 +288,7 @@ class TheHiveWrapper(SOARWrapper):
             return TheHiveWrapper.unable_to_connect_message
 
         except requests.exceptions.JSONDecodeError:
-            return {
-                "error": "The SOAR URL provided does not provide a valid data format. Please make sure that the soar is running on the URL."
-            }
+            return {"error": "The SOAR URL provided does not provide a valid data format. Please make sure that the soar is running on the URL."}
 
     def get_tasks(self, org_id, case_id):
         try:
@@ -365,9 +335,7 @@ class TheHiveWrapper(SOARWrapper):
             return TheHiveWrapper.unable_to_connect_message
 
         except requests.exceptions.JSONDecodeError:
-            return {
-                "error": "The SOAR URL provided does not provide a valid data format. Please make sure that the soar is running on the URL."
-            }
+            return {"error": "The SOAR URL provided does not provide a valid data format. Please make sure that the soar is running on the URL."}
 
     def get_task_logs(self, task_id):
         try:
@@ -396,9 +364,7 @@ class TheHiveWrapper(SOARWrapper):
             return TheHiveWrapper.unable_to_connect_message
 
         except requests.exceptions.JSONDecodeError:
-            return {
-                "error": "The SOAR URL provided does not provide a valid data format. Please make sure that the soar is running on the URL."
-            }
+            return {"error": "The SOAR URL provided does not provide a valid data format. Please make sure that the soar is running on the URL."}
 
     def create_task_log(self, task_id, message):
         try:
@@ -448,6 +414,207 @@ class TheHiveWrapper(SOARWrapper):
                     "description": task_data["Description"],
                     "status": "Waiting",
                     "group": "Automatic Case Investigator",
+                },
+            )
+            return TheHiveWrapper.success_message
+        except requests.exceptions.ConnectionError:
+            return TheHiveWrapper.unable_to_connect_message
+        
+    def get_page(self, page_id: str | None = None):
+        try:
+            url = f"{self.protocol}//{self.hostname}{self.base_dir}api/v1/query"
+            headers = {
+                "Content-Type": "application/json",
+                "Authorization": f"Bearer {self.api_key}",
+            }
+
+            # Build the query
+            query = {
+                "query": [
+                    {
+                        "_name": "getPage",
+                        "idOrName": page_id
+                    }
+                ]
+            }
+
+            response = requests.post(url, headers=headers, json=query)
+
+            output = []
+            for page_data in response.json():
+                formatted = self.format_response(page_data)
+                output.append({
+                    "id": formatted["id"],
+                    "createdBy": formatted["createdBy"],
+                    "createdAt": formatted["createdAt"],
+                    "title": formatted["title"],
+                    "content": formatted["content"],
+                    "category": formatted["category"]
+                })
+
+            return {"message": "Success", "pages": output}
+
+        except requests.exceptions.ConnectionError:
+            return TheHiveWrapper.unable_to_connect_message
+        
+    def get_pages(self, org_id: str | None = None, case_id: str | None = None):
+        try:
+            url = f"{self.protocol}//{self.hostname}{self.base_dir}api/v1/query"
+            headers = {
+                "Content-Type": "application/json",
+                "Authorization": f"Bearer {self.api_key}",
+            }
+            if org_id:
+                headers["X-Organisation"] = f"{org_id}"
+
+            # Build the query
+            query = {"query": []}
+            if case_id:
+                query["query"].append({"_name": "getCase", "idOrName": case_id})
+                query["query"].append({"_name": "pages"})
+            else:
+                query["query"].append({"_name": "listPage"})
+
+            response = requests.post(url, headers=headers, json=query)
+
+            output = []
+            for page_data in response.json():
+                formatted = self.format_response(page_data)
+                output.append({
+                    "id": formatted["id"],
+                    "createdBy": formatted["createdBy"],
+                    "createdAt": formatted["createdAt"],
+                    "title": formatted["title"],
+                    "content": formatted["content"],
+                    "category": formatted["category"]
+                })
+
+            return {"message": "Success", "pages": output}
+
+        except requests.exceptions.ConnectionError:
+            return TheHiveWrapper.unable_to_connect_message
+
+    def create_page(self, title: str, content: str, category: str):
+        try:
+            url = f"{self.protocol}//{self.hostname}{self.base_dir}api/v1/page"
+            response = requests.post(
+                url,
+                headers={
+                    "Content-Type": "application/json",
+                    "Authorization": f"Bearer {self.api_key}",
+                },
+                json={
+                    "title": title,
+                    "content": content,
+                    "category": category,
+                },
+            ).json()
+
+            return {"message": "Success", "id": response["_id"]}
+        except requests.exceptions.ConnectionError:
+            return TheHiveWrapper.unable_to_connect_message
+
+    def update_page(
+        self,
+        page_id: str,
+        title: str | None = None,
+        content: str | None = None,
+        category: str | None = None
+    ):
+        data = dict()
+        if title:
+            data["title"] = title
+        if content:
+            data["content"] = content
+        if category:
+            data["category"] = category
+            
+        try:
+            url = f"{self.protocol}//{self.hostname}{self.base_dir}api/v1/page/{page_id}"
+            requests.patch(
+                url,
+                headers={
+                    "Content-Type": "application/json",
+                    "Authorization": f"Bearer {self.api_key}",
+                },
+                json=data,
+            )
+            return TheHiveWrapper.success_message
+        except requests.exceptions.ConnectionError:
+            return TheHiveWrapper.unable_to_connect_message
+
+    def delete_page(self, page_id: str):
+        try:
+            url = f"{self.protocol}//{self.hostname}{self.base_dir}api/v1/page/{page_id}"
+            requests.delete(
+                url,
+                headers={
+                    "Content-Type": "application/json",
+                    "Authorization": f"Bearer {self.api_key}",
+                },
+            )
+            return TheHiveWrapper.success_message
+        except requests.exceptions.ConnectionError:
+            return TheHiveWrapper.unable_to_connect_message
+        
+    def create_page_in_case(self, case_id: str, title: str, content: str, category: str):
+        try:
+            url = f"{self.protocol}//{self.hostname}{self.base_dir}api/v1/case/{case_id}/page"
+            response = requests.post(
+                url,
+                headers={
+                    "Content-Type": "application/json",
+                    "Authorization": f"Bearer {self.api_key}",
+                },
+                json={
+                    "title": title,
+                    "content": content,
+                    "category": category,
+                },
+            ).json()
+
+            return {"message": "Success", "id": response["_id"]}
+        except requests.exceptions.ConnectionError:
+            return TheHiveWrapper.unable_to_connect_message
+
+    def update_page_in_case(
+        self,
+        case_id: str,
+        page_id: str,
+        title: str | None = None,
+        content: str | None = None,
+        category: str | None = None
+    ):
+        data = dict()
+        if title:
+            data["title"] = title
+        if content:
+            data["content"] = content
+        if category:
+            data["category"] = category
+            
+        try:
+            url = f"{self.protocol}//{self.hostname}{self.base_dir}api/v1/case/{case_id}/page/{page_id}"
+            requests.patch(
+                url,
+                headers={
+                    "Content-Type": "application/json",
+                    "Authorization": f"Bearer {self.api_key}",
+                },
+                json=data,
+            )
+            return TheHiveWrapper.success_message
+        except requests.exceptions.ConnectionError:
+            return TheHiveWrapper.unable_to_connect_message
+
+    def delete_page_in_case(self, case_id: str, page_id: str):
+        try:
+            url = f"{self.protocol}//{self.hostname}{self.base_dir}api/v1/case/{case_id}/page/{page_id}"
+            requests.delete(
+                url,
+                headers={
+                    "Content-Type": "application/json",
+                    "Authorization": f"Bearer {self.api_key}",
                 },
             )
             return TheHiveWrapper.success_message

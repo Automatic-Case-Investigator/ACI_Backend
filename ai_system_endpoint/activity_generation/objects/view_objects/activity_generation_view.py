@@ -1,6 +1,4 @@
-from ai_system_endpoint.task_generation.objects.task_generation.task_generator import (
-    TaskGenerator,
-)
+from ai_system_endpoint.activity_generation.objects.activity_generation.activity_generator import ActivityGenerator
 from soar_endpoint.objects.soar_wrapper.soar_wrapper_builder import SOARWrapperBuilder
 from ACI_Backend.objects.job_scheduler.job_scheduler import job_scheduler
 from rest_framework_simplejwt.authentication import JWTAuthentication
@@ -13,16 +11,17 @@ from django.conf import settings
 import requests
 
 
-class TaskGenerationView(APIView):
+class ActivityGenerationView(APIView):
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated]
 
     def post(self, request, *args, **kwargs):
         soar_id = request.POST.get("soar_id")
+        org_id = request.POST.get("org_id")
         case_id = request.POST.get("case_id")
         web_search_enabled = request.POST.get("web_search")
 
-        if soar_id is None or case_id is None:
+        if soar_id is None or case_id is None or org_id is None:
             return Response(
                 {"error": "Required field missing"}, status=status.HTTP_400_BAD_REQUEST
             )
@@ -48,7 +47,7 @@ class TaskGenerationView(APIView):
 
         case_data = None
 
-        case_data = soar_wrapper.get_case(case_id)
+        case_data = soar_wrapper.get_case(case_id=case_id)
         if "error" in case_data.keys():
             return Response(case_data, status=status.HTTP_400_BAD_REQUEST)
 
@@ -56,16 +55,28 @@ class TaskGenerationView(APIView):
         case_data["description"] = case_data["description"][
             : settings.MAXIMUM_STRING_LENGTH
         ]
+        
+        tasks_data = None
+        tasks_data = soar_wrapper.get_tasks(org_id=org_id, case_id=case_id)
+        if "error" in tasks_data.keys():
+            return Response(tasks_data, status=status.HTTP_400_BAD_REQUEST)
 
         try:
-            task_generator = TaskGenerator()
-            task_generator.set_soarwrapper(soarwrapper=soar_wrapper)
-            job_scheduler.add_job(
-                task_generator.generate_task,
-                name="Task_Generation",
-                case_data=case_data,
-                web_search_enabled=web_search_enabled
-            )
+            for task in tasks_data["tasks"]:
+                task_generator = ActivityGenerator()
+                task_generator.set_soarwrapper(soarwrapper=soar_wrapper)
+                job_scheduler.add_job(
+                    task_generator.generate_activity,
+                    name="Activity_Generation",
+                    case_title=case_data["title"],
+                    case_description=case_data["description"],
+                    task_data={
+                        "id": task["id"],
+                        "title": task["title"][: settings.MAXIMUM_STRING_LENGTH],
+                        "description": task["description"][: settings.MAXIMUM_STRING_LENGTH],
+                    },
+                    web_search=web_search_enabled
+                )
         except TypeError as e:
             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
         except requests.exceptions.ConnectionError:
