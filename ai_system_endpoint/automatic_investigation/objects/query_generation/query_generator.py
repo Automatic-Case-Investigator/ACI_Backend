@@ -53,7 +53,11 @@ class QueryGenerator:
         task_data: dict,
         activity: str,
         field_map: dict,
-        prev_activity_critique: str
+        prev_activity_critique: str,
+        earliest_unit: str,
+        earliest_magnitude: int,
+        vicinity_unit: str,
+        vicinity_magnitude: int,
     ) -> dict:
         if case_title is None:
             raise TypeError("Case title is not provided")
@@ -82,6 +86,10 @@ class QueryGenerator:
             "task_title": task_title,
             "task_description": task_description,
             "activity": activity,
+            "earliest_unit": earliest_unit,
+            "earliest_magnitude": earliest_magnitude,
+            "vicinity_unit": vicinity_unit,
+            "vicinity_magnitude": vicinity_magnitude,
             "siem": "wazuh",  # TODO: SIEM wrapper should be implemented and replace this hardcoded value
         }
 

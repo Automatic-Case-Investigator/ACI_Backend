@@ -23,6 +23,11 @@ class Investigator:
         soar_id,
         org_id,
         case_id,
+        earliest_unit,
+        earliest_magnitude,
+        vicinity_unit,
+        vicinity_magnitude,
+        max_iterations,
     ):
         self.siem_id = siem_id
         self.soar_id = soar_id
@@ -54,7 +59,12 @@ class Investigator:
         self.query_to_summary: dict[str, str] = dict()
         self.explanation_regex = r"(?<=Explanation: )[^\n]*"
         self.final_verdict_regex = r"(?<=Final verdict: )[^\n]*"
-        self.max_investigation_iter = 5
+        
+        self.earliest_unit = earliest_unit
+        self.earliest_magnitude = earliest_magnitude
+        self.vicinity_unit = vicinity_unit
+        self.vicinity_magnitude = vicinity_magnitude
+        self.max_investigation_iter = max_iterations
         self.max_syntax_fixes = 3
         
     async def get_relevent_events(self, case_title: str, case_description: str, task_data: dict[str, str], activity: str, query: str, web_search: bool = False) -> list[str]:
@@ -135,6 +145,10 @@ class Investigator:
                 activity=activity["message"] if len(current_activity_summary) == 0 else current_activity_summary,
                 field_map=field_map,
                 prev_activity_critique=prev_activity_critique,
+                earliest_unit=self.earliest_unit,
+                earliest_magnitude=self.earliest_magnitude,
+                vicinity_unit=self.vicinity_unit,
+                vicinity_magnitude=self.vicinity_magnitude
             )
             
             query_generation_response = response["result"]
@@ -301,10 +315,11 @@ class Investigator:
 
         # Run async investigation tasks
         async def run_investigations():
+            investigation_tasks = []
             for task in tasks_data["tasks"]:
                 task_log_result = self.soar_wrapper.get_task_logs(task_id=task["id"])
                 for activity in task_log_result["task_logs"]:
-                    await self.investigate_activity(
+                    task_coro = self.investigate_activity(
                         case_title=case_title,
                         case_description=case_description,
                         task_data={
@@ -313,6 +328,10 @@ class Investigator:
                         },
                         activity=activity,
                     )
+                    investigation_tasks.append(task_coro)
+            
+            # Run all investigations concurrently
+            await asyncio.gather(*investigation_tasks)
         
         asyncio.run(run_investigations())
                     
