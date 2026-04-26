@@ -2,5 +2,5 @@ from django.apps import AppConfig
 
 
 class JobsEndpointConfig(AppConfig):
-    default_auto_field = 'django.db.models.BigAutoField'
-    name = 'jobs_endpoint'
+    default_auto_field = "django.db.models.BigAutoField"
+    name = "jobs_endpoint"

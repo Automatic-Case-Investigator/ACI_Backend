@@ -26,7 +26,7 @@ class TaskGenerationView(APIView):
             return Response(
                 {"error": "Required field missing"}, status=status.HTTP_400_BAD_REQUEST
             )
-            
+
         if web_search_enabled is None:
             web_search_enabled = False
         elif not web_search_enabled.isdigit():
@@ -64,7 +64,7 @@ class TaskGenerationView(APIView):
                 task_generator.generate_task,
                 name="Task_Generation",
                 case_data=case_data,
-                web_search_enabled=web_search_enabled
+                web_search_enabled=web_search_enabled,
             )
         except TypeError as e:
             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)

@@ -5,35 +5,40 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from soar_endpoint import models
 
+
 class SOARInfoView(APIView):
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated]
-    
+
     def get(self, request, *args, **kwargs):
         soar_objs = models.SOARInfo.objects.all()
         output = {"message": []}
-        
+
         for soar in soar_objs:
-            output["message"].append({
-                "id": soar.id,
-                "soar_type" : soar.soar_type,
-                "api_key": soar.api_key,
-                "protocol": soar.protocol,
-                "hostname": soar.hostname,
-                "base_dir": soar.base_dir,
-                "name": soar.name
-            })
-        
+            output["message"].append(
+                {
+                    "id": soar.id,
+                    "soar_type": soar.soar_type,
+                    "api_key": soar.api_key,
+                    "protocol": soar.protocol,
+                    "hostname": soar.hostname,
+                    "base_dir": soar.base_dir,
+                    "name": soar.name,
+                }
+            )
+
         return Response(output, status=status.HTTP_200_OK)
-    
+
     def delete(self, request, *args, **kwargs):
         soar_id = request.data.get("soar_id")
         if soar_id is None:
-            return Response({"error": "Required field missing"}, status=status.HTTP_400_BAD_REQUEST)
-        
+            return Response(
+                {"error": "Required field missing"}, status=status.HTTP_400_BAD_REQUEST
+            )
+
         models.SOARInfo.objects.filter(id=soar_id).delete()
         return Response({"message": "Success"}, status=status.HTTP_200_OK)
-    
+
     def post(self, request, *args, **kwargs):
         """Set SOAR info in the database
 
@@ -58,11 +63,14 @@ class SOARInfoView(APIView):
         name = request.data.get("name")
         hostname = request.data.get("hostname")
         base_dir = request.data.get("base_dir")
-        
+
         if soar_id is None:
             # Creating new SOARInfo object
             if soar_type is None:
-                return Response({"error": "Required field missing"}, status=status.HTTP_400_BAD_REQUEST)
+                return Response(
+                    {"error": "Required field missing"},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
             if api_key is None:
                 api_key = ""
             if protocol is None:
@@ -83,12 +91,16 @@ class SOARInfoView(APIView):
                 ).save()
                 return Response({"message": "Success"}, status=status.HTTP_200_OK)
             except ValueError:
-                return Response({"error": "Invalid SOAR type"}, status=status.HTTP_400_BAD_REQUEST)
+                return Response(
+                    {"error": "Invalid SOAR type"}, status=status.HTTP_400_BAD_REQUEST
+                )
         else:
             # Update a pre-existing SOARInfo object
             try:
                 if soar_type is not None:
-                    models.SOARInfo.objects.filter(id=soar_id).update(soar_type=soar_type)
+                    models.SOARInfo.objects.filter(id=soar_id).update(
+                        soar_type=soar_type
+                    )
                 if api_key is not None:
                     models.SOARInfo.objects.filter(id=soar_id).update(api_key=api_key)
                 if protocol is not None:
@@ -101,4 +113,6 @@ class SOARInfoView(APIView):
                     models.SOARInfo.objects.filter(id=soar_id).update(base_dir=base_dir)
                 return Response({"message": "Success"}, status=status.HTTP_200_OK)
             except ValueError:
-                return Response({"error": "Invalid SOAR type"}, status=status.HTTP_400_BAD_REQUEST)
+                return Response(
+                    {"error": "Invalid SOAR type"}, status=status.HTTP_400_BAD_REQUEST
+                )

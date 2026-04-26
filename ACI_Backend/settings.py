@@ -53,6 +53,8 @@ INSTALLED_APPS = [
     "ai_system_endpoint",
     "ai_system_endpoint.task_generation",
     "ai_system_endpoint.automatic_investigation",
+    "ai_system_endpoint.report_generation",
+    "ai_system_endpoint.agent_settings",
 ]
 
 MIDDLEWARE = [
@@ -139,6 +141,9 @@ MAXIMUM_STRING_LENGTH = int(os.getenv("MAXIMUM_STRING_LENGTH"))
 
 # Page sizes
 CASE_PAGE_SIZE = int(os.getenv("CASE_PAGE_SIZE"))
+
+# Maximum concurrent agent (LLM) calls per investigation worker
+AGENT_MAX_CONCURRENT_CALLS = int(os.getenv("AGENT_MAX_CONCURRENT_CALLS", "3"))
 
 # Password validation
 # https://docs.djangoproject.com/en/5.1/ref/settings/#auth-password-validators

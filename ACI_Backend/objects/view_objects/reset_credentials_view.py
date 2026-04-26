@@ -6,6 +6,7 @@ from django.db.utils import IntegrityError
 from rest_framework.views import APIView
 from rest_framework import status
 
+
 # API endpoint for handling username / password resets
 class ResetCredentialsView(APIView):
     authentication_classes = [JWTAuthentication]
@@ -38,7 +39,7 @@ class ResetCredentialsView(APIView):
             request.user.username = new_username
             request.user.set_password(new_password)
             request.user.save()
-        
+
             refresh = RefreshToken.for_user(request.user)
 
             return Response(

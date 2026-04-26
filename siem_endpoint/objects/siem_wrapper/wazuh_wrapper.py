@@ -42,8 +42,10 @@ class WazuhWrapper(SIEMWrapper):
                 "Authorization": "Basic " + credentials,
                 "Content-Type": "application/json",
             }
-            response = requests.post(url, headers=headers, json=query, verify=False).json()
-            
+            response = requests.post(
+                url, headers=headers, json=query, verify=False
+            ).json()
+
             hits = []
             if "hits" in response:
                 hits = response["hits"]["hits"]
@@ -56,17 +58,17 @@ class WazuhWrapper(SIEMWrapper):
                 output.append(hit["_id"])
 
             return {"results": output}
-        
+
         except KeyError:
             return WazuhWrapper.unable_to_connect_message
-        
+
         except requests.exceptions.ConnectionError as e:
             return WazuhWrapper.unable_to_connect_message
-        
+
         except json.JSONDecodeError:
             print(traceback.format_exc())
             return {"error": "Invalid query format"}
-        
+
     def _walk_properties(self, props, prefix=""):
         result = {}
 
@@ -88,10 +90,10 @@ class WazuhWrapper(SIEMWrapper):
                         result[f"{field_path}.{subname}"] = subval["type"]
 
         return result
-        
+
     def get_available_fields(self):
         try:
-            url = f"{self.protocol}//{self.hostname}{self.base_dir}wazuh-alerts-*/_mapping?pretty"
+            url = f"{self.protocol}//{self.hostname}{self.base_dir}wazuh-alerts-*/_field_caps?fields=*"
             credentials = base64.b64encode(
                 f"{self.username}:{self.password}".encode()
             ).decode("utf-8")
@@ -100,16 +102,87 @@ class WazuhWrapper(SIEMWrapper):
                 "Content-Type": "application/json",
             }
             response = requests.get(url, headers=headers, verify=False).json()
-            
+
             field_map = {}
-            for index in response.keys():
-                props = response[index].get("mappings", {}).get("properties", {})
-                fields = self._walk_properties(props)
-                field_map.update(fields)
+            for field in response["fields"]:
+                first_key = next(iter(response["fields"][field]))
+                aggregatable = response["fields"][field][first_key].get("aggregatable", False)
+                field_map[field] = {
+                    "type": response["fields"][field][first_key].get("type", "unknown"),
+                    "searchable": response["fields"][field][first_key].get("searchable", False),
+                    "aggregatable": aggregatable,
+                }
 
             return field_map
-
+        
         except requests.exceptions.ConnectionError as e:
+            return WazuhWrapper.unable_to_connect_message
+        
+    def get_field_top_values(self, field: str, size: int = 10):
+        url = f"{self.protocol}//{self.hostname}{self.base_dir}wazuh-alerts-*/_field_caps?fields=*"
+        
+        credentials = base64.b64encode(
+            f"{self.username}:{self.password}".encode()
+        ).decode("utf-8")
+        
+        headers = {
+            "Authorization": "Basic " + credentials,
+            "Content-Type": "application/json",
+        }
+        
+        agg_query = {
+            "size": 0,
+            "aggs": {
+                "field_counts": {
+                    "terms": {
+                        "field": field,
+                        "size": size,
+                    }
+                }
+            },
+        }
+        agg_url = f"{self.protocol}//{self.hostname}{self.base_dir}wazuh-alerts-*/_search"
+        
+        agg_response = requests.post(
+            agg_url, headers=headers, json=agg_query, verify=False
+        ).json()
+        
+        buckets = (
+            agg_response.get("aggregations", {})
+            .get("field_counts", {})
+            .get("buckets", [])
+        )
+        
+        return [{"key": bucket["key"], "count": bucket["doc_count"]} for bucket in buckets]
+
+    def get_field_count(self, field: str):
+        try:
+            credentials = base64.b64encode(
+                f"{self.username}:{self.password}".encode()
+            ).decode("utf-8")
+
+            headers = {
+                "Authorization": "Basic " + credentials,
+                "Content-Type": "application/json",
+            }
+
+            count_query = {
+                "query": {
+                    "exists": {
+                        "field": field,
+                    }
+                }
+            }
+
+            count_url = (
+                f"{self.protocol}//{self.hostname}{self.base_dir}wazuh-alerts-*/_count"
+            )
+            count_response = requests.post(
+                count_url, headers=headers, json=count_query, verify=False
+            ).json()
+
+            return count_response.get("count", 0)
+        except requests.exceptions.ConnectionError:
             return WazuhWrapper.unable_to_connect_message
 
     def get_event(self, id: str):
@@ -123,17 +196,21 @@ class WazuhWrapper(SIEMWrapper):
                 "Authorization": "Basic " + credentials,
                 "Content-Type": "application/json",
             }
-            response = requests.post(url, headers=headers, json=query, verify=False).json()
-            
+            response = requests.post(
+                url, headers=headers, json=query, verify=False
+            ).json()
+
             hits = []
             if "hits" in response:
                 hits = response["hits"]["hits"]
+                
+            print(id, len(hits))
 
             return {"result": hits[0]}
 
         except requests.exceptions.ConnectionError as e:
             return WazuhWrapper.unable_to_connect_message
-        
+
     def fix_curly_brace_mismatch(self, query: str) -> str:
         open_count = query.count("{")
         close_count = query.count("}")
@@ -146,21 +223,18 @@ class WazuhWrapper(SIEMWrapper):
             i = len(query) - 1
             while i >= 0 and excess > 0:
                 if query[i] == "}":
-                    query = query[:i] + query[i+1:]
+                    query = query[:i] + query[i + 1 :]
                     excess -= 1
                 i -= 1
 
         return query
-    
+
     def format_query(self, query: str) -> str:
         query = self.fix_curly_brace_mismatch(query)
         query_dict = json.loads(query)
-        
-        return json.dumps({
-            "query": query_dict["query"]
-        })
-        
-        
+
+        return json.dumps({"query": query_dict["query"]})
+
     def parse_queries_from_task_log(self, task_log_str: str):
         matches = re.finditer(r"^[-*•]\s*(.+)$", task_log_str, flags=re.MULTILINE)
         queries = []
@@ -172,11 +246,9 @@ class WazuhWrapper(SIEMWrapper):
 
             try:
                 query = self.format_query(point)
-                queries.append({
-                    "query": query,
-                    "start_pos": start_pos,
-                    "end_pos": end_pos
-                })
+                queries.append(
+                    {"query": query, "start_pos": start_pos, "end_pos": end_pos}
+                )
             except json.JSONDecodeError:
                 print("Warning: Bulletpoint format must be JSON, ignoring bulletpoint")
 

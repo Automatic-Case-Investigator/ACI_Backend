@@ -9,5 +9,6 @@ urlpatterns = [
     path("observables/", ObservableControlView.as_view()),
     path("task/", TaskControlView.as_view()),
     path("task_log/", TaskLogControlView.as_view()),
-    path("document/", DocumentControlView.as_view()),
+    path("document/", UniversalDocumentControlView.as_view()),
+    path("case_document/", CaseDocumentControlView.as_view()),
 ]

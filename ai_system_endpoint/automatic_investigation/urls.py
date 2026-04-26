@@ -5,9 +5,8 @@ from django.urls import path
 urlpatterns = [
     # TODO: Paths for investigation main control flow activation (investigation should start here)
     path("investigate/", AutomaticInvestigationView.as_view()),
-
+    path("investigate_activity/", SingleActivityInvestigationView.as_view()),
     # TODO: Paths for activity generation (for misc usage)
-    
     # path("activity_generation_model/generate/", TaskGenerationView.as_view()),
     # path("activity_generation_model/history/", HistoryView.as_view()),
     # path("activity_generation_model/backup/", BackupView.as_view()),
@@ -15,7 +14,9 @@ urlpatterns = [
     # path("activity_generation_model/current_backup_version/", CurrentBackupVersionView.as_view()),
     # path("activity_generation_model/case_tmp_storage/", CaseTemporaryStorageView.as_view()),
     # path("activity_generation_model/train_model/", TaskGenTrainerView.as_view()),
-    
     # TODO: Paths for SIEM investigation
-    path("query_generation_model/generate/", QueryGenerationView.QueryGenerationView.as_view()),
+    path(
+        "query_generation_model/generate/",
+        QueryGenerationView.QueryGenerationView.as_view(),
+    ),
 ]

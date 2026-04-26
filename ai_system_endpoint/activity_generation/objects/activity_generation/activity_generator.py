@@ -25,7 +25,9 @@ class ActivityGenerator:
         if str(type(self.soarwrapper)) == str(thehive_wrapper.TheHiveWrapper):
             return task_data["description"]
 
-    def generate_activity(self, case_title, case_description, task_data, web_search: bool = False) -> dict:
+    def generate_activity(
+        self, case_title, case_description, task_data, web_search: bool = False
+    ) -> dict:
         title = self.extract_task_title(task_data)
         description = self.extract_task_description(task_data)
 
@@ -43,7 +45,7 @@ class ActivityGenerator:
                 "case_description": case_description,
                 "task_title": title,
                 "task_description": description,
-                "web_search": int(web_search)
+                "web_search": int(web_search),
             },
         )
         answer_raw = response.json()["result"]
@@ -55,9 +57,11 @@ class ActivityGenerator:
             bulletpoint_search = re.search(bulletpoint_regex, activity)
             if bulletpoint_search is not None:
                 activity_string = re.sub(bulletpoint_regex, "", activity)
-                
-                result = self.soarwrapper.create_task_log(task_data["id"], activity_string)
+
+                result = self.soarwrapper.create_task_log(
+                    task_data["id"], activity_string
+                )
                 if "error" in result.keys():
                     return {"error": result["error"]}
-                
+
         return {"message": "success"}

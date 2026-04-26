@@ -5,6 +5,6 @@ class SOARWrapper:
         self.hostname = hostname
         self.base_dir = base_dir
         self.api_key = api_key
-        
+
     def get_case(self, case_id):
         print("To be implemented")

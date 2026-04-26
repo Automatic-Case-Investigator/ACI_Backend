@@ -25,7 +25,17 @@ class ActivityCompletionChecker:
         if str(type(self.soarwrapper)) == str(wrapper.TheHiveWrapper):
             return task_data["description"]
 
-    def check_completeness(self, case_title: str, case_description: str, task_data: dict[str, str], activity: str, queries: list[str], query_summaries: list[str], web_search: bool = False) -> dict:
+    def check_completeness(
+        self,
+        case_title: str,
+        case_description: str,
+        task_data: dict[str, str],
+        activity: str,
+        additional_notes: str,
+        queries: list[str],
+        query_summaries: list[str],
+        web_search: bool = False,
+    ) -> dict:
         title = self.extract_title(task_data)
         description = self.extract_description(task_data)
 
@@ -35,18 +45,25 @@ class ActivityCompletionChecker:
         if description is None:
             raise TypeError("Description is not provided")
 
+        request_data = {
+            "case_title": case_title,
+            "case_description": case_description,
+            "task_title": title,
+            "task_description": description,
+            "activity": activity,
+            "queries": queries,
+            "query_summaries": query_summaries,
+            "web_search": int(web_search),
+        }
+
+        if additional_notes is not None and str(additional_notes).strip() != "":
+            request_data["additional_notes"] = additional_notes
+
         response = requests.post(
-            settings.AI_BACKEND_URL + "/completion_check_model/activity_completion_check/",
+            settings.AI_BACKEND_URL
+            + "/completion_check_model/activity_completion_check/",
             headers={"Authorization": f"Bearer {settings.AI_BACKEND_API_KEY}"},
-            data={
-                "case_title": case_title,
-                "case_description": case_description,
-                "task_title": title,
-                "task_description": description,
-                "activity": activity,
-                "queries": queries,
-                "query_summaries": query_summaries,
-                "web_search": int(web_search)
-            },
+            data=request_data,
+            timeout=None,
         )
         return response.json()

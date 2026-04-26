@@ -1,20 +1,11 @@
+from ACI_Backend.objects.redis_client.redis_client import redis_client
 from django.conf import settings
 from threading import Lock
 from pebble import ThreadPool
-from redis import Redis
 import uuid
 import time
 import traceback
 import requests
-
-
-redis_client = Redis(
-    host=settings.REDIS_HOST,
-    port=settings.REDIS_PORT,
-    db=settings.REDIS_DB,
-    password=settings.REDIS_PASSWORD,
-    decode_responses=True,
-)
 
 
 class Job:
@@ -44,9 +35,9 @@ class JobScheduler:
                 inner_dict[status_keys] = job_status[status_keys]
 
             output["jobs"].append(inner_dict)
-        
+
         return output
-    
+
     def find_jobs(self, name) -> dict:
         output = {"jobs": []}
         for key in redis_client.scan_iter(f"job:{name}_*"):
@@ -57,7 +48,7 @@ class JobScheduler:
                 inner_dict[status_keys] = job_status[status_keys]
 
             output["jobs"].append(inner_dict)
-        
+
         return output
 
     def add_job(self, func, name: str = "", *args, **kwargs) -> str:
@@ -66,14 +57,22 @@ class JobScheduler:
         with self.lock:
             self.jobs[job.id] = job
             redis_client.hset(
-                f"job:{job.id}", mapping={"status": job.status, "createdAt": job.created_at, "result": ""}
+                f"job:{job.id}",
+                mapping={
+                    "status": job.status,
+                    "createdAt": job.created_at,
+                    "result": "",
+                },
             )
-            job.future = self.executor.schedule(self._run_job, args=[job])   
+            job.future = self.executor.schedule(self._run_job, args=[job])
         return job.id
 
     def _run_job(self, job) -> str:
         try:
-            redis_client.hset(f"job:{job.id}", mapping={"status": "running", "createdAt": job.created_at})
+            redis_client.hset(
+                f"job:{job.id}",
+                mapping={"status": "running", "createdAt": job.created_at},
+            )
             result = job.func(*job.args, **job.kwargs)
             time_finished = time.time()
 
@@ -92,26 +91,28 @@ class JobScheduler:
                     output = result["error"]
 
             redis_client.hset(
-                f"job:{job.id}", mapping={
+                f"job:{job.id}",
+                mapping={
                     "status": "completed",
                     "createdAt": job.created_at,
                     "finishedAt": time_finished,
                     "elapsedTime": time_finished - job.created_at,
-                    "result": output
-                    }
+                    "result": output,
+                },
             )
             return output
         except Exception as e:
             print(traceback.format_exc())
             time_finished = time.time()
             redis_client.hset(
-                f"job:{job.id}", mapping={
+                f"job:{job.id}",
+                mapping={
                     "status": "failed",
                     "createdAt": job.created_at,
                     "finishedAt": time_finished,
                     "elapsedTime": time_finished - job.created_at,
-                    "result": traceback.format_exc()
-                    }
+                    "result": traceback.format_exc(),
+                },
             )
             return str(e)
 
@@ -127,13 +128,14 @@ class JobScheduler:
             if job and job.future and job.future.cancel():
                 time_finished = time.time()
                 redis_client.hset(
-                    f"job:{job.id}", mapping={
+                    f"job:{job.id}",
+                    mapping={
                         "status": "canceled",
                         "createdAt": job.created_at,
                         "finishedAt": time_finished,
                         "elapsedTime": time_finished - job.created_at,
-                        "result": str(e)
-                        }
+                        "result": str(e),
+                    },
                 )
                 return True
         return False
@@ -146,9 +148,9 @@ class JobScheduler:
                     del self.jobs[job_id]
                 redis_client.delete(f"job:{job_id}")
                 return True
-            
+
             redis_client.delete(f"job:{job_id}")
-            
+
         return False
 
 

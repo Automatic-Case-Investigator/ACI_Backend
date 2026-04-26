@@ -25,6 +25,11 @@ services:
       - ${POSTGRES_PORT}:${POSTGRES_PORT}
     networks:
       - backend_net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
     volumes:
       - db_volume:/database
 
@@ -41,7 +46,10 @@ services:
     env_file:
       - .env
     depends_on:
-      - redis
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
 
 volumes:
   db_volume:

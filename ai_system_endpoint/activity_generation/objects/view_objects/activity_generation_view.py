@@ -1,4 +1,6 @@
-from ai_system_endpoint.activity_generation.objects.activity_generation.activity_generator import ActivityGenerator
+from ai_system_endpoint.activity_generation.objects.activity_generation.activity_generator import (
+    ActivityGenerator,
+)
 from soar_endpoint.objects.soar_wrapper.soar_wrapper_builder import SOARWrapperBuilder
 from ACI_Backend.objects.job_scheduler.job_scheduler import job_scheduler
 from rest_framework_simplejwt.authentication import JWTAuthentication
@@ -25,7 +27,7 @@ class ActivityGenerationView(APIView):
             return Response(
                 {"error": "Required field missing"}, status=status.HTTP_400_BAD_REQUEST
             )
-            
+
         if web_search_enabled is None:
             web_search_enabled = False
         elif not web_search_enabled.isdigit():
@@ -55,7 +57,7 @@ class ActivityGenerationView(APIView):
         case_data["description"] = case_data["description"][
             : settings.MAXIMUM_STRING_LENGTH
         ]
-        
+
         tasks_data = None
         tasks_data = soar_wrapper.get_tasks(org_id=org_id, case_id=case_id)
         if "error" in tasks_data.keys():
@@ -73,9 +75,11 @@ class ActivityGenerationView(APIView):
                     task_data={
                         "id": task["id"],
                         "title": task["title"][: settings.MAXIMUM_STRING_LENGTH],
-                        "description": task["description"][: settings.MAXIMUM_STRING_LENGTH],
+                        "description": task["description"][
+                            : settings.MAXIMUM_STRING_LENGTH
+                        ],
                     },
-                    web_search=web_search_enabled
+                    web_search=web_search_enabled,
                 )
         except TypeError as e:
             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)

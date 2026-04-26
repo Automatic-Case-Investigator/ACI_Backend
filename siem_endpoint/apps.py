@@ -2,5 +2,5 @@ from django.apps import AppConfig
 
 
 class SiemEndpointConfig(AppConfig):
-    default_auto_field = 'django.db.models.BigAutoField'
-    name = 'siem_endpoint'
+    default_auto_field = "django.db.models.BigAutoField"
+    name = "siem_endpoint"

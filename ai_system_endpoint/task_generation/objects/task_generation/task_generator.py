@@ -38,7 +38,11 @@ class TaskGenerator:
         response = requests.post(
             settings.AI_BACKEND_URL + "/task_generation_model/generate/",
             headers={"Authorization": f"Bearer {settings.AI_BACKEND_API_KEY}"},
-            data={"case_title": title, "case_description": description, "web_search": "1" if web_search_enabled else "0"},
+            data={
+                "case_title": title,
+                "case_description": description,
+                "web_search": "1" if web_search_enabled else "0",
+            },
         )
         answer_raw = response.json()["result"]
         tasks = answer_raw.split("\n\n")

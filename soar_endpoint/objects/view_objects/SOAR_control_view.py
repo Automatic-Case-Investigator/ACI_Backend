@@ -168,7 +168,8 @@ class ObservableControlView(APIView):
             return Response(response, status=status.HTTP_502_BAD_GATEWAY)
 
         return Response(response, status=status.HTTP_200_OK)
-    
+
+
 class TaskControlView(APIView):
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated]
@@ -291,18 +292,19 @@ class TaskLogControlView(APIView):
                 return Response(response, status=status.HTTP_502_BAD_GATEWAY)
             return Response(response, status=status.HTTP_200_OK)
 
-class DocumentControlView(APIView):
+
+class UniversalDocumentControlView(APIView):
     def get(self, request, *args, **kwargs):
         soar_id = request.GET.get("soar_id")
         org_id = request.GET.get("org_id")
         case_id = request.GET.get("case_id")
         document_id = request.GET.get("document_id")
-                
+
         if soar_id is None or org_id is None or case_id is None:
             return Response(
                 {"error": "Required field missing"}, status=status.HTTP_400_BAD_REQUEST
             )
-            
+
         soar_info_obj = models.SOARInfo.objects.get(id=soar_id)
         soar_wrapper_builder = SOARWrapperBuilder()
         try:
@@ -311,16 +313,152 @@ class DocumentControlView(APIView):
             )
         except TypeError as e:
             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
-        
+
         response = dict()
         if document_id is None:
             response = soar_wrapper.get_pages(org_id=org_id, case_id=case_id)
         else:
             response = soar_wrapper.get_page(page_id=document_id)
-            
+
         if "error" in response:
             return Response(response, status=status.HTTP_502_BAD_GATEWAY)
-        
+
         return Response(response, status=status.HTTP_200_OK)
-        
-        
+
+    def delete(self, request, *args, **kwargs):
+        soar_id = request.data.get("soar_id")
+        document_id = request.data.get("document_id")
+
+        if soar_id is None or document_id is None:
+            return Response(
+                {"error": "Required field missing"}, status=status.HTTP_400_BAD_REQUEST
+            )
+
+        soar_info_obj = models.SOARInfo.objects.get(id=soar_id)
+        soar_wrapper_builder = SOARWrapperBuilder()
+        try:
+            soar_wrapper = soar_wrapper_builder.build_from_model_object(
+                soar_info_obj=soar_info_obj
+            )
+        except TypeError as e:
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+        response = soar_wrapper.delete_page(page_id=document_id)
+        if "error" in response:
+            return Response(response, status=status.HTTP_502_BAD_GATEWAY)
+
+        return Response(response, status=status.HTTP_200_OK)
+
+
+class CaseDocumentControlView(APIView):
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, *args, **kwargs):
+        soar_id = request.GET.get("soar_id")
+        org_id = request.GET.get("org_id")
+        case_id = request.GET.get("case_id")
+        document_id = request.GET.get("document_id")
+
+        if soar_id is None or org_id is None or case_id is None:
+            return Response(
+                {"error": "Required field missing"}, status=status.HTTP_400_BAD_REQUEST
+            )
+
+        soar_info_obj = models.SOARInfo.objects.get(id=soar_id)
+        soar_wrapper_builder = SOARWrapperBuilder()
+        try:
+            soar_wrapper = soar_wrapper_builder.build_from_model_object(
+                soar_info_obj=soar_info_obj
+            )
+        except TypeError as e:
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+        if document_id is not None:
+            response = soar_wrapper.get_page(page_id=document_id)
+        else:
+            response = soar_wrapper.get_pages(org_id=org_id, case_id=case_id)
+
+        if "error" in response:
+            return Response(response, status=status.HTTP_502_BAD_GATEWAY)
+
+        return Response(response, status=status.HTTP_200_OK)
+
+    def post(self, request, *args, **kwargs):
+        soar_id = request.data.get("soar_id")
+        org_id = request.data.get("org_id")
+        case_id = request.data.get("case_id")
+        document_id = request.data.get("document_id")
+        title = request.data.get("title")
+        content = request.data.get("content")
+        category = request.data.get("category")
+
+        if soar_id is None or org_id is None or case_id is None:
+            return Response(
+                {"error": "Required field missing"}, status=status.HTTP_400_BAD_REQUEST
+            )
+
+        soar_info_obj = models.SOARInfo.objects.get(id=soar_id)
+        soar_wrapper_builder = SOARWrapperBuilder()
+        try:
+            soar_wrapper = soar_wrapper_builder.build_from_model_object(
+                soar_info_obj=soar_info_obj
+            )
+        except TypeError as e:
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+        if document_id is None:
+            if title is None or content is None or category is None:
+                return Response(
+                    {"error": "Required field missing"},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+            response = soar_wrapper.create_page_in_case(
+                case_id=case_id,
+                title=title,
+                content=content,
+                category=category,
+                org_id=org_id,
+            )
+        else:
+            response = soar_wrapper.update_page_in_case(
+                case_id=case_id,
+                page_id=document_id,
+                title=title,
+                content=content,
+                category=category,
+                org_id=org_id,
+            )
+
+        if "error" in response:
+            return Response(response, status=status.HTTP_502_BAD_GATEWAY)
+
+        return Response(response, status=status.HTTP_200_OK)
+
+    def delete(self, request, *args, **kwargs):
+        soar_id = request.data.get("soar_id")
+        org_id = request.data.get("org_id")
+        case_id = request.data.get("case_id")
+        document_id = request.data.get("document_id")
+
+        if soar_id is None or org_id is None or case_id is None or document_id is None:
+            return Response(
+                {"error": "Required field missing"}, status=status.HTTP_400_BAD_REQUEST
+            )
+
+        soar_info_obj = models.SOARInfo.objects.get(id=soar_id)
+        soar_wrapper_builder = SOARWrapperBuilder()
+        try:
+            soar_wrapper = soar_wrapper_builder.build_from_model_object(
+                soar_info_obj=soar_info_obj
+            )
+        except TypeError as e:
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+        response = soar_wrapper.delete_page_in_case(
+            case_id=case_id, page_id=document_id, org_id=org_id
+        )
+        if "error" in response:
+            return Response(response, status=status.HTTP_502_BAD_GATEWAY)
+
+        return Response(response, status=status.HTTP_200_OK)
