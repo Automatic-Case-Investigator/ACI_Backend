@@ -3,7 +3,6 @@ aiohttp==3.13.4
 anyio==4.6.2.post1
 asgiref==3.8.1
 astunparse==1.6.3
-blinker==1.8.2
 certifi==2024.8.30
 charset-normalizer==3.4.0
 click==8.1.7

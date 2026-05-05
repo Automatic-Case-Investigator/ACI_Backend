@@ -6,6 +6,10 @@ import uuid
 import time
 import traceback
 import requests
+import logging
+
+
+logger = logging.getLogger(__name__)
 
 
 class Job:
@@ -102,7 +106,7 @@ class JobScheduler:
             )
             return output
         except Exception as e:
-            print(traceback.format_exc())
+            logger.exception("Job execution failed for job_id=%s", job.id)
             time_finished = time.time()
             redis_client.hset(
                 f"job:{job.id}",
@@ -134,7 +138,7 @@ class JobScheduler:
                         "createdAt": job.created_at,
                         "finishedAt": time_finished,
                         "elapsedTime": time_finished - job.created_at,
-                        "result": str(e),
+                        "result": "Canceled by user",
                     },
                 )
                 return True

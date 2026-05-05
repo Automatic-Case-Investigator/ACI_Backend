@@ -37,6 +37,7 @@ ALLOWED_HOSTS = ["*"]
 # Application definition
 
 INSTALLED_APPS = [
+    "ACI_Backend.apps.MainBackendConfig",
     # 'django.contrib.admin',
     "django.contrib.auth",
     "django.contrib.contenttypes",
@@ -104,6 +105,36 @@ TEMPLATES = [
 CORS_ALLOW_ALL_ORIGINS = True
 CORS_ALLOW_CREDENTIALS = True
 
+LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO").upper()
+DJANGO_LOG_LEVEL = os.getenv("DJANGO_LOG_LEVEL", LOG_LEVEL).upper()
+
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "formatters": {
+        "standard": {
+            "format": "%(asctime)s %(levelname)s [%(name)s:%(lineno)d] %(message)s",
+        },
+    },
+    "handlers": {
+        "console": {
+            "class": "logging.StreamHandler",
+            "formatter": "standard",
+        },
+    },
+    "root": {
+        "handlers": ["console"],
+        "level": LOG_LEVEL,
+    },
+    "loggers": {
+        "django": {
+            "handlers": ["console"],
+            "level": DJANGO_LOG_LEVEL,
+            "propagate": False,
+        },
+    },
+}
+
 WSGI_APPLICATION = "ACI_Backend.wsgi.application"
 
 # AI backend url
@@ -144,6 +175,21 @@ CASE_PAGE_SIZE = int(os.getenv("CASE_PAGE_SIZE"))
 
 # Maximum concurrent agent (LLM) calls per investigation worker
 AGENT_MAX_CONCURRENT_CALLS = int(os.getenv("AGENT_MAX_CONCURRENT_CALLS", "3"))
+
+# SIEM schema retrieval refresh and cache settings
+SIEM_SCHEMA_RETRIEVAL_INTERVAL_MINUTES = int(
+    os.getenv("SIEM_SCHEMA_RETRIEVAL_INTERVAL_MINUTES", "10")
+)
+_DEFAULT_SIEM_SCHEMA_RETRIEVAL_CACHE_TTL_SECONDS = max(
+    SIEM_SCHEMA_RETRIEVAL_INTERVAL_MINUTES * 120,
+    600,
+)
+SIEM_SCHEMA_RETRIEVAL_CACHE_TTL_SECONDS = int(
+    os.getenv(
+        "SIEM_SCHEMA_RETRIEVAL_CACHE_TTL_SECONDS",
+        str(_DEFAULT_SIEM_SCHEMA_RETRIEVAL_CACHE_TTL_SECONDS),
+    )
+)
 
 # Password validation
 # https://docs.djangoproject.com/en/5.1/ref/settings/#auth-password-validators

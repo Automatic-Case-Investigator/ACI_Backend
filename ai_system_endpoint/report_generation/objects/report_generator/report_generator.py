@@ -62,11 +62,6 @@ class ReportGenerator:
             org_id=self.org_id,
         )
 
-    def _extract_report_text(self, response_data: dict) -> str:
-        if "result" not in response_data:
-            return ""
-        return self._truncate(str(response_data.get("result") or ""))
-
     async def _run_limited_report_call(self, call):
         async with self.report_call_semaphore:
             loop = asyncio.get_running_loop()
@@ -75,7 +70,7 @@ class ReportGenerator:
     async def _summarize_activity(
         self, case_title: str, case_description: str, task_data: dict, activity: dict
     ):
-        activity_message = self._truncate(activity.get("message", ""))
+        activity_message = activity.get("message", "")
 
         # response = await self._run_limited_report_call(
         #     functools.partial(
@@ -195,7 +190,7 @@ class ReportGenerator:
                 if "error" in task_report_response:
                     return task_report_response
 
-                task_report = self._extract_report_text(task_report_response)
+                task_report = task_report_response.get("result", "")
 
                 task_page_title = f"Task Report - {task_data['title']}"
                 task_page_result = await loop.run_in_executor(
@@ -262,7 +257,7 @@ class ReportGenerator:
         if "error" in case_report_response:
             return case_report_response
 
-        case_report = self._extract_report_text(case_report_response)
+        case_report = case_report_response.get("result", "")
         case_page_result = self._upsert_case_page(
             title="Case Report",
             content=case_report,

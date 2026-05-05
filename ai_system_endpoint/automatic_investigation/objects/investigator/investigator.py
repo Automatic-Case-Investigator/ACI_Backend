@@ -11,14 +11,15 @@ from ai_system_endpoint.automatic_investigation.objects.summarizer.summarizer im
     ActivitySummarizer,
     QuerySummarizer,
 )
-from ai_system_endpoint.automatic_investigation.objects.siem_field_selection.siem_field_selector import (
-    SIEMFieldSelector,
+from ACI_Backend.objects.siem_schema_retrieval.siem_schema_retrieval_service import (
+    get_siem_schema_cache,
 )
 from soar_endpoint.objects.soar_wrapper.soar_wrapper_builder import SOARWrapperBuilder
 from siem_endpoint.objects.siem_wrapper.siem_wrapper_builder import SIEMWrapperBuilder
 from soar_endpoint import models as soar_models
 from siem_endpoint import models as siem_models
 from django.conf import settings
+import logging
 import json
 import re
 import asyncio
@@ -26,6 +27,9 @@ import functools
 import inspect
 import hashlib
 import datetime
+
+
+logger = logging.getLogger(__name__)
 
 
 class Investigator:
@@ -67,7 +71,6 @@ class Investigator:
         self.completion_checker = ActivityCompletionChecker()
         self.query_summarizer = QuerySummarizer()
         self.activity_summarizer = ActivitySummarizer()
-        self.siem_field_selector = SIEMFieldSelector()
 
         self.field_top_values_cache: dict[str, list] = {}
         self.field_count_cache: dict[str, int] = {}
@@ -218,7 +221,7 @@ class Investigator:
                 additional_notes=self.additional_notes,
             ),
         )
-        print(response)
+        logger.debug("Query summarization response received for query=%s", query)
         return response["result"]
 
     def _extract_summary_and_representative_event(
@@ -285,7 +288,11 @@ class Investigator:
             if event_id in prior_seen_event_ids
         )
         query_to_seen_stats[query] = (seen_before_count, total_events)
-        print("Filtering for events: ", query_results["results"])
+        logger.debug(
+            "Filtering candidate events for query=%s with total_events=%s",
+            query,
+            total_events,
+        )
 
         relevent_events = await self.get_relevent_events(
             case_title=case_title,
@@ -306,7 +313,11 @@ class Investigator:
             query_to_representative_event[query] = ""
             return
 
-        print("Relevent Events: ", relevent_events)
+        logger.debug(
+            "Relevant events selected for query=%s count=%s",
+            query,
+            len(relevent_events),
+        )
 
         summary = await self.summarize_query_results(
             query=query,
@@ -338,7 +349,7 @@ class Investigator:
             f"Seen-before events (prior iterations): {seen_before_count}/{total_events}\n\n"
             + f"Summary: {parsed_summary}"
         )
-        print(f"Summary for query {query}: {query_to_summary[query]}")
+        logger.debug("Built query summary for query=%s", query)
 
     def _extract_selected_fields(self, selected_fields_result) -> set[str]:
         if selected_fields_result is None:
@@ -462,6 +473,7 @@ class Investigator:
         case_description: str,
         task_data: dict[str, str],
         activity: dict[str, str],
+        searchable_field_map: dict,
     ):
         original_activity = activity["message"]
         if self.additional_notes and self.additional_notes.strip():
@@ -480,60 +492,7 @@ class Investigator:
         query_to_summary: dict[str, str] = {}
         query_to_representative_event: dict[str, str] = {}
 
-        print("Start Investigating Activity")
-
-        loop = asyncio.get_running_loop()
-        
-        # Fetch relevant information of SIEM fields to provide context to the model for query generation and analysis
-        base_field_map = await loop.run_in_executor(
-            None, self.siem_wrapper.get_available_fields
-        )
-        searchable_field_map = {}
-        if isinstance(base_field_map, dict):
-            for field_name, field_info in base_field_map.items():
-                if not isinstance(field_info, dict):
-                    continue
-                if not bool(field_info.get("searchable", False)):
-                    continue
-
-                filtered_field_info = dict(field_info)
-                filtered_field_info.pop("searchable", None)
-                searchable_field_map[field_name] = filtered_field_info
-
-        if searchable_field_map:
-            count_results = await asyncio.gather(
-                *[
-                    loop.run_in_executor(
-                        None,
-                        functools.partial(
-                            self.siem_wrapper.get_field_count,
-                            field=field_name,
-                        ),
-                    )
-                    for field_name in searchable_field_map.keys()
-                ],
-                return_exceptions=True,
-            )
-
-            pruned_field_map = {}
-            for field_name, count_result in zip(
-                searchable_field_map.keys(), count_results
-            ):
-                if isinstance(count_result, Exception):
-                    continue
-
-                if not isinstance(count_result, int):
-                    continue
-
-                self.field_count_cache[field_name] = count_result
-                if count_result <= 0:
-                    continue
-
-                field_info = dict(searchable_field_map[field_name])
-                # field_info["count"] = count_result
-                pruned_field_map[field_name] = field_info
-
-            searchable_field_map = pruned_field_map
+        logger.info("Starting investigation for activity_id=%s", activity.get("id"))
 
         while (
             not done_investigation and investigation_iter <= self.max_investigation_iter
@@ -551,7 +510,11 @@ class Investigator:
 
             field_map = {k: dict(v) for k, v in searchable_field_map.items()}
 
-            print("Generating Queries")
+            logger.info(
+                "Generating queries for activity_id=%s iteration=%s",
+                activity.get("id"),
+                investigation_iter,
+            )
             query_search_results = []
             query_generation_response = ""
             not_query_detected = False
@@ -579,7 +542,7 @@ class Investigator:
                 )
                 query_generation_response = response["result"]
                 
-                print("Querying SIEM")
+                logger.info("Querying SIEM for activity_id=%s", activity.get("id"))
                 query_search_results = self.siem_wrapper.parse_queries_from_task_log(
                     task_log_str=query_generation_response
                 )
@@ -624,8 +587,12 @@ class Investigator:
 
             current_queries = [result["query"] for result in query_search_results]
             prior_seen_event_ids = set(seen_event_ids)
-            
-            print("Queried")
+
+            logger.info(
+                "Completed SIEM query parsing for activity_id=%s query_count=%s",
+                activity.get("id"),
+                len(current_queries),
+            )
 
             # Process all queries concurrently
             await asyncio.gather(
@@ -716,7 +683,11 @@ class Investigator:
                 )
 
             # Invoke completion check to see if the activity is fulfilled
-            print("Analyzing activity completeness")
+            logger.info(
+                "Analyzing activity completeness for activity_id=%s iteration=%s",
+                activity.get("id"),
+                investigation_iter,
+            )
             completion_analysis = await self._run_limited_agent_call(
                 functools.partial(
                     self.completion_checker.check_completeness,
@@ -732,7 +703,10 @@ class Investigator:
                 ),
             )
 
-            print(completion_analysis)
+            logger.debug(
+                "Completion analysis response received for activity_id=%s",
+                activity.get("id"),
+            )
 
             result_text = completion_analysis["result"]
 
@@ -788,7 +762,12 @@ class Investigator:
                     .strip()
                 )
 
-                print(explanation, final_verdict)
+                logger.info(
+                    "Completion verdict for activity_id=%s iteration=%s verdict=%s",
+                    activity.get("id"),
+                    investigation_iter,
+                    final_verdict,
+                )
 
                 if final_verdict.upper() == "YES":
                     # Write activity summary
@@ -799,7 +778,11 @@ class Investigator:
                         f"\n\n### Iteration Analysis\n{explanation}\n\n"
                     )
 
-            print("Writing to SOAR")
+            logger.info(
+                "Writing investigation iteration to SOAR for activity_id=%s iteration=%s",
+                activity.get("id"),
+                investigation_iter,
+            )
 
             # Update the activity log once per iteration.
             activity["message"] += delta_activity_message
@@ -841,6 +824,13 @@ class Investigator:
         case_description = case_data["description"][: settings.MAXIMUM_STRING_LENGTH]
         tasks_data = self.soar_wrapper.get_tasks(self.org_id, self.case_id)
 
+        searchable_field_map, field_counts = get_siem_schema_cache(
+            siem_wrapper=self.siem_wrapper,
+            siem_id=self.siem_id,
+        )
+        if field_counts:
+            self.field_count_cache.update(field_counts)
+
         # Run async investigation tasks
         async def run_investigations():
             loop = asyncio.get_running_loop()
@@ -871,6 +861,7 @@ class Investigator:
                             ],
                         },
                         activity=activity,
+                        searchable_field_map=searchable_field_map,
                     )
                     investigation_tasks.append(task_coro)
 
@@ -888,7 +879,14 @@ class Investigator:
         case_description = case_data["description"][: settings.MAXIMUM_STRING_LENGTH]
         tasks_data = self.soar_wrapper.get_tasks(self.org_id, self.case_id)
 
-        print("Investigating single activity")
+        searchable_field_map, field_counts = get_siem_schema_cache(
+            siem_wrapper=self.siem_wrapper,
+            siem_id=self.siem_id,
+        )
+        if field_counts:
+            self.field_count_cache.update(field_counts)
+
+        logger.info("Investigating single activity_id=%s", activity_id)
 
         for task in tasks_data["tasks"]:
             task_log_result = self.soar_wrapper.get_task_logs(task_id=task["id"])
@@ -908,6 +906,7 @@ class Investigator:
                                 ],
                             },
                             activity=activity,
+                            searchable_field_map=searchable_field_map,
                         )
                     )
                     return {"message": "Success"}
