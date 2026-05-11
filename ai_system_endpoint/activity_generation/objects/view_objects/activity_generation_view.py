@@ -11,11 +11,61 @@ from rest_framework import status
 from soar_endpoint import models
 from django.conf import settings
 import requests
+import threading
 
 
 class ActivityGenerationView(APIView):
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated]
+
+    @staticmethod
+    def _generate_activities_for_tasks(
+        soar_wrapper,
+        case_title: str,
+        case_description: str,
+        tasks: list[dict],
+        web_search_enabled: bool,
+    ) -> dict:
+        exceptions = []
+        exceptions_lock = threading.Lock()
+        threads = []
+
+        def generate_task_activity(task: dict) -> None:
+            try:
+                task_generator = ActivityGenerator()
+                task_generator.set_soarwrapper(soarwrapper=soar_wrapper)
+                task_generator.generate_activity(
+                    case_title=case_title,
+                    case_description=case_description,
+                    task_data={
+                        "id": task["id"],
+                        "title": task["title"][: settings.MAXIMUM_STRING_LENGTH],
+                        "description": task["description"][
+                            : settings.MAXIMUM_STRING_LENGTH
+                        ],
+                    },
+                    web_search=web_search_enabled,
+                )
+            except Exception as exc:
+                with exceptions_lock:
+                    exceptions.append(exc)
+
+        for task in tasks:
+            thread = threading.Thread(
+                target=generate_task_activity,
+                args=(task,),
+                name=f"activity-generation-{task['id']}",
+            )
+            thread.start()
+            threads.append(thread)
+
+        for thread in threads:
+            thread.join()
+
+        if exceptions:
+            raise exceptions[0]
+
+        return {"message": "success"}
 
     def post(self, request, *args, **kwargs):
         soar_id = request.POST.get("soar_id")
@@ -64,23 +114,15 @@ class ActivityGenerationView(APIView):
             return Response(tasks_data, status=status.HTTP_400_BAD_REQUEST)
 
         try:
-            for task in tasks_data["tasks"]:
-                task_generator = ActivityGenerator()
-                task_generator.set_soarwrapper(soarwrapper=soar_wrapper)
-                job_scheduler.add_job(
-                    task_generator.generate_activity,
-                    name="Activity_Generation",
-                    case_title=case_data["title"],
-                    case_description=case_data["description"],
-                    task_data={
-                        "id": task["id"],
-                        "title": task["title"][: settings.MAXIMUM_STRING_LENGTH],
-                        "description": task["description"][
-                            : settings.MAXIMUM_STRING_LENGTH
-                        ],
-                    },
-                    web_search=web_search_enabled,
-                )
+            job_scheduler.add_job(
+                self._generate_activities_for_tasks,
+                name="Activity_Generation",
+                soar_wrapper=soar_wrapper,
+                case_title=case_data["title"],
+                case_description=case_data["description"],
+                tasks=tasks_data["tasks"],
+                web_search_enabled=web_search_enabled,
+            )
         except TypeError as e:
             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
         except requests.exceptions.ConnectionError:

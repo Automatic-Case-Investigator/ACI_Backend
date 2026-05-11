@@ -81,7 +81,9 @@ class Investigator:
         self.completion_checker.set_soarwrapper(self.soar_wrapper)
         self.activity_summarizer.set_soarwrapper(self.soar_wrapper)
 
+        # Activity completion check output regex patterns
         self.explanation_regex = r"(?<=Explanation: )[^\n]*"
+        self.improvement_regex = r"(?<=Improvement suggestion: )[^\n]*"
         self.final_verdict_regex = r"(?<=Final verdict: )[^\n]*"
 
         self.earliest_unit = earliest_unit
@@ -347,7 +349,8 @@ class Investigator:
 
         query_to_summary[query] = (
             f"Seen-before events (prior iterations): {seen_before_count}/{total_events}\n\n"
-            + f"Summary: {parsed_summary}"
+            + f"Summary: {parsed_summary}\n\n"
+            + (f"Most representative event:\n\n```{representative_event}```" if representative_event else "")
         )
         logger.debug("Built query summary for query=%s", query)
 
@@ -695,6 +698,7 @@ class Investigator:
                     case_description=case_description,
                     task_data=task_data_trunc,
                     activity=f"{original_activity}\n\n{prev_activity_critique}",
+                    field_map=field_map,
                     additional_notes=self.additional_notes,
                     queries=current_queries,
                     query_summaries=[
@@ -711,6 +715,7 @@ class Investigator:
             result_text = completion_analysis["result"]
 
             explanation = ""
+            improvement = ""
             final_verdict = ""
 
             exp_index = result_text.find("Explanation:")
@@ -723,6 +728,14 @@ class Investigator:
                 explanation = result_text[
                     exp_index + len("Explanation:") : verdict_index
                 ].strip()
+
+                improvement_search = re.search(
+                    self.improvement_regex,
+                    result_text,
+                    flags=re.IGNORECASE,
+                )
+                if improvement_search is not None:
+                    improvement = improvement_search.group(0).strip()
 
                 prev_activity_critique += (
                     f"\n\n## Investigation Iteration {investigation_iter}\n"
@@ -769,6 +782,13 @@ class Investigator:
                     final_verdict,
                 )
 
+                prev_activity_critique += "\n\n### Final Verdict\n"
+                prev_activity_critique += final_verdict
+
+                if improvement:
+                    prev_activity_critique += "\n\n### Improvement Suggestion\n"
+                    prev_activity_critique += improvement
+
                 if final_verdict.upper() == "YES":
                     # Write activity summary
                     done_investigation = True
@@ -777,6 +797,10 @@ class Investigator:
                     delta_activity_message += (
                         f"\n\n### Iteration Analysis\n{explanation}\n\n"
                     )
+                    if improvement:
+                        delta_activity_message += (
+                            f"### Improvement Suggestion\n{improvement}\n\n"
+                        )
 
             logger.info(
                 "Writing investigation iteration to SOAR for activity_id=%s iteration=%s",

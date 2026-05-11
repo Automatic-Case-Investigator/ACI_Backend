@@ -31,6 +31,7 @@ class ActivityCompletionChecker:
         case_description: str,
         task_data: dict[str, str],
         activity: str,
+        field_map: dict,
         additional_notes: str,
         queries: list[str],
         query_summaries: list[str],
@@ -55,6 +56,13 @@ class ActivityCompletionChecker:
             "query_summaries": query_summaries,
             "web_search": int(web_search),
         }
+        
+        if field_map is not None:
+            field_data = ""
+            for field, field_info in field_map.items():
+                field_data += f"{field}: {field_info}\n"
+
+            request_data["fields"] = field_data
 
         if additional_notes is not None and str(additional_notes).strip() != "":
             request_data["additional_notes"] = additional_notes
