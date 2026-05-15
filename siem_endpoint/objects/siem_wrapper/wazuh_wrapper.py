@@ -205,6 +205,8 @@ class WazuhWrapper(SIEMWrapper):
                 hits = response["hits"]["hits"]
                 
             print(id, len(hits))
+            if len(hits) == 0:
+                return {"result": dict()}
 
             return {"result": hits[0]}
 

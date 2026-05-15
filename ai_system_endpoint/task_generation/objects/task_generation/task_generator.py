@@ -25,7 +25,12 @@ class TaskGenerator:
         if str(type(self.soarwrapper)) == str(thehive_wrapper.TheHiveWrapper):
             return case_data["description"]
 
-    def generate_task(self, case_data, web_search_enabled=False) -> dict:
+    def generate_task(
+        self,
+        case_data,
+        web_search_enabled=False,
+        additional_notes: str | None = None,
+    ) -> dict:
         title = self.extract_case_title(case_data)
         description = self.extract_case_description(case_data)
 
@@ -35,14 +40,18 @@ class TaskGenerator:
         if description is None:
             raise TypeError("Description is not provided")
 
+        request_data = {
+            "case_title": title,
+            "case_description": description,
+            "web_search": "1" if web_search_enabled else "0",
+        }
+        if additional_notes is not None and str(additional_notes).strip() != "":
+            request_data["additional_notes"] = additional_notes
+
         response = requests.post(
             settings.AI_BACKEND_URL + "/task_generation_model/generate/",
             headers={"Authorization": f"Bearer {settings.AI_BACKEND_API_KEY}"},
-            data={
-                "case_title": title,
-                "case_description": description,
-                "web_search": "1" if web_search_enabled else "0",
-            },
+            data=request_data,
         )
         answer_raw = response.json()["result"]
         tasks = answer_raw.split("\n\n")

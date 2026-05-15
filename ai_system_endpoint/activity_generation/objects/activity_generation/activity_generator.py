@@ -26,7 +26,12 @@ class ActivityGenerator:
             return task_data["description"]
 
     def generate_activity(
-        self, case_title, case_description, task_data, web_search: bool = False
+        self,
+        case_title,
+        case_description,
+        task_data,
+        web_search: bool = False,
+        additional_notes: str | None = None,
     ) -> dict:
         title = self.extract_task_title(task_data)
         description = self.extract_task_description(task_data)
@@ -37,16 +42,20 @@ class ActivityGenerator:
         if description is None:
             raise TypeError("Description is not provided")
 
+        request_data = {
+            "case_title": case_title,
+            "case_description": case_description,
+            "task_title": title,
+            "task_description": description,
+            "web_search": int(web_search),
+        }
+        if additional_notes is not None and str(additional_notes).strip() != "":
+            request_data["additional_notes"] = additional_notes
+
         response = requests.post(
             settings.AI_BACKEND_URL + "/activity_generation_model/generate/",
             headers={"Authorization": f"Bearer {settings.AI_BACKEND_API_KEY}"},
-            data={
-                "case_title": case_title,
-                "case_description": case_description,
-                "task_title": title,
-                "task_description": description,
-                "web_search": int(web_search),
-            },
+            data=request_data,
         )
         answer_raw = response.json()["result"]
         activities = answer_raw.split("\n")

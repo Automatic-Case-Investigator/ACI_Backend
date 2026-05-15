@@ -55,7 +55,7 @@ INSTALLED_APPS = [
     "ai_system_endpoint.task_generation",
     "ai_system_endpoint.automatic_investigation",
     "ai_system_endpoint.report_generation",
-    "ai_system_endpoint.agent_settings",
+    "ai_system_endpoint.settings.apps.SettingsConfig",
 ]
 
 MIDDLEWARE = [
@@ -166,6 +166,10 @@ REDIS_PORT = os.getenv("REDIS_PORT")
 REDIS_PASSWORD = os.getenv("REDIS_PASSWORD")
 REDIS_DB = 0
 MAX_WORKERS = 5
+
+WORKFLOW_QUEUE_KEY = os.getenv("WORKFLOW_QUEUE_KEY", "workflow:queue")
+WORKFLOW_SLOT_KEY_PREFIX = os.getenv("WORKFLOW_SLOT_KEY_PREFIX", "workflow:slot")
+WORKFLOW_SLOT_TTL_SECONDS = int(os.getenv("WORKFLOW_SLOT_TTL_SECONDS", "3600"))
 
 # Maximum string length
 MAXIMUM_STRING_LENGTH = int(os.getenv("MAXIMUM_STRING_LENGTH"))

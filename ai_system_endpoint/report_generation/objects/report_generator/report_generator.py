@@ -15,11 +15,19 @@ import asyncio
 
 
 class ReportGenerator:
-    def __init__(self, soar_id: str, org_id: str, case_id: str, report_template: str):
+    def __init__(
+        self,
+        soar_id: str,
+        org_id: str,
+        case_id: str,
+        report_template: str,
+        additional_notes: str | None = None,
+    ):
         self.soar_id = soar_id
         self.org_id = org_id
         self.case_id = case_id
         self.report_template = report_template
+        self.additional_notes = additional_notes
 
         soar_info_obj = soar_models.SOARInfo.objects.get(id=self.soar_id)
         soar_wrapper_builder = SOARWrapperBuilder()
@@ -81,6 +89,7 @@ class ReportGenerator:
         #         task_description=task_data["description"],
         #         activity=activity_message,
         #         report_template=self.report_template,
+        #         additional_notes=self.additional_notes,
         #     ),
         # )
 
@@ -185,6 +194,7 @@ class ReportGenerator:
                         task_title=task_data["title"],
                         task_description=task_data["description"],
                         activity_reports=activity_reports,
+                            additional_notes=self.additional_notes,
                     ),
                 )
                 if "error" in task_report_response:
@@ -251,6 +261,7 @@ class ReportGenerator:
                     case_description=case_description,
                     task_reports=task_report_list,
                     report_template=self.report_template,
+                    additional_notes=self.additional_notes,
                 )
             )
         )

@@ -1,7 +1,7 @@
 from ai_system_endpoint.report_generation.objects.report_generator.report_generator import (
     ReportGenerator,
 )
-from ai_system_endpoint.agent_settings.models import AgentSettings
+from ai_system_endpoint.settings.models import AgentSettings
 from ACI_Backend.objects.job_scheduler.job_scheduler import job_scheduler
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework.permissions import IsAuthenticated

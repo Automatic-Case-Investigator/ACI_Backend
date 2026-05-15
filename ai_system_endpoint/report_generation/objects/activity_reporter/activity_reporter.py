@@ -12,20 +12,25 @@ class ActivityReporter:
         task_description: str,
         activity: str,
         report_template: str,
+        additional_notes: str | None = None,
     ) -> dict:
         try:
+            request_data = {
+                "case_title": case_title,
+                "case_description": case_description,
+                "task_title": task_title,
+                "task_description": task_description,
+                "activity": activity,
+                "report_template": report_template,
+            }
+            if additional_notes is not None and str(additional_notes).strip() != "":
+                request_data["additional_notes"] = additional_notes
+
             response = requests.post(
                 settings.AI_BACKEND_URL
                 + "/report_generation_model/generate_activity_report/",
                 headers={"Authorization": f"Bearer {settings.AI_BACKEND_API_KEY}"},
-                data={
-                    "case_title": case_title,
-                    "case_description": case_description,
-                    "task_title": task_title,
-                    "task_description": task_description,
-                    "activity": activity,
-                    "report_template": report_template,
-                },
+                data=request_data,
                 timeout=None,
             )
             return response.json()

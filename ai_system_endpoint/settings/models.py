@@ -6,7 +6,7 @@ class AgentSettings(models.Model):
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
-        related_name="agent_settings",
+        related_name="settings",
     )
     report_templates = models.JSONField(blank=True, default=dict)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -14,7 +14,7 @@ class AgentSettings(models.Model):
 
     class Meta:
         constraints = [
-            models.UniqueConstraint(fields=["user"], name="unique_user_agent_settings")
+            models.UniqueConstraint(fields=["user"], name="unique_user_settings")
         ]
 
 

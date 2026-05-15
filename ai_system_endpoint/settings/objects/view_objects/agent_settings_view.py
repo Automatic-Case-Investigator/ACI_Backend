@@ -4,7 +4,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.authentication import JWTAuthentication
 
-from ai_system_endpoint.agent_settings.models import AgentSettings
+from ai_system_endpoint.settings.models import AgentSettings
 
 
 class AgentSettingsView(APIView):

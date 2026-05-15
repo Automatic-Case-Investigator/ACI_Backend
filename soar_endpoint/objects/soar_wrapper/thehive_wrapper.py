@@ -156,6 +156,31 @@ class TheHiveWrapper(SOARWrapper):
             return {
                 "error": "The SOAR URL provided does not provide a valid data format. Please make sure that the soar is running on the URL."
             }
+            
+    def update_case(self, case_id, title, description):
+        try:
+            url = (
+                f"{self.protocol}//{self.hostname}{self.base_dir}api/v1/case/{case_id}"
+            )
+            requests.patch(
+                url,
+                headers={
+                    "Content-Type": "application/json",
+                    "Authorization": f"Bearer {self.api_key}",
+                },
+                json={
+                    "title": title,
+                    "description": description,
+                },
+            )
+            return TheHiveWrapper.success_message
+        except requests.exceptions.ConnectionError:
+            return TheHiveWrapper.unable_to_connect_message
+
+        except requests.exceptions.JSONDecodeError:
+            return {
+                "error": "The SOAR URL provided does not provide a valid data format. Please make sure that the soar is running on the URL."
+            }
 
     def get_observable(self, org_id, observable_id):
         try:
