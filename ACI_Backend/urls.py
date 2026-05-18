@@ -26,4 +26,5 @@ urlpatterns = [
     path("soar/", include("soar_endpoint.urls")),
     path("jobs/", include("jobs_endpoint.urls")),
     path("ai_backend/", include("ai_system_endpoint.urls")),
+    path("dashboard/", include("dashboard_endpoint.urls")),
 ]

@@ -56,6 +56,7 @@ INSTALLED_APPS = [
     "ai_system_endpoint.automatic_investigation",
     "ai_system_endpoint.report_generation",
     "ai_system_endpoint.settings.apps.SettingsConfig",
+    "dashboard_endpoint",
 ]
 
 MIDDLEWARE = [
